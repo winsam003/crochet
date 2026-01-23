@@ -1,65 +1,221 @@
-import Image from "next/image";
+import { getPatterns } from "@/lib/ravelry";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
-export default function Home() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; query?: string; free?: string }>;
+}) {
+  const params = await searchParams;
+  const currentPage = Number(params.page) || 1;
+  const currentQuery = params.query || "";
+  const freeFilter = params.free || ""; // "free" (무료), "online" (유료), "" (전체)
+
+  // API 호출 시 free 필터 파라미터 전달
+  const data = await getPatterns(currentQuery, currentPage, freeFilter);
+  const patterns = data.patterns || [];
+  const paginator = data.paginator;
+  const totalPages = paginator?.page_count || 1;
+  const totalResults = paginator?.results || 0;
+
+  const getPageNumbers = () => {
+    let start = Math.max(1, currentPage - 2);
+    let end = Math.min(totalPages, start + 4);
+    if (end - start < 4) start = Math.max(1, end - 4);
+
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      if (i >= 1 && i <= totalPages) pages.push(i);
+    }
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
+  // 페이지 이동 공통 URL 생성 함수
+  const getPageUrl = (page: number) => {
+    return `/?query=${currentQuery}&page=${page}${freeFilter ? `&free=${freeFilter}` : ""}`;
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="container mx-auto px-4 py-8 space-y-10">
+      {/* 1. 배너 섹션 */}
+      <section className="text-center py-16 bg-stone-100 rounded-3xl space-y-4">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-stone-900 font-sans">
+          WinSam Crochet
+        </h1>
+        <p className="text-stone-600 max-w-2xl mx-auto text-lg italic">
+          "Ravelry 기반 코바늘 도안 검색"
+        </p>
+      </section>
+
+      {/* 2. 검색창 및 필터 섹션 */}
+      <div className="space-y-6">
+        <form
+          action="/"
+          method="GET"
+          className="flex flex-col md:flex-row w-full max-w-2xl mx-auto items-center gap-3"
+        >
+          {/* 유료/무료 필터 셀렉트 */}
+          <select
+            name="free"
+            defaultValue={freeFilter}
+            className="h-10 px-4 rounded-full border border-stone-200 bg-white text-sm text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400 w-full md:w-40"
+          >
+            <option value="">전체 도안</option>
+            <option value="free">무료 도안</option>
+            <option value="online">유료 도안</option>
+          </select>
+
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+            <Input
+              name="query"
+              defaultValue={currentQuery}
+              placeholder="아이템 검색 (영어로 검색해주세요.)"
+              className="pl-10 border-stone-200 focus:ring-stone-400 rounded-full w-full"
+            />
+          </div>
+          <Button
+            type="submit"
+            className="bg-stone-800 hover:bg-stone-700 rounded-full px-8 w-full md:w-auto"
+          >
+            검색
+          </Button>
+        </form>
+
+        <div className="flex justify-between items-end border-b pb-2 border-stone-100 text-stone-600">
+          <p className="text-sm font-medium">
+            전체{" "}
+            <span className="text-stone-900 font-bold">
+              {totalResults.toLocaleString()}
+            </span>
+            개의 도안을 찾았습니다.
+          </p>
+          <p className="text-xs">
+            {currentPage} / {totalPages} 페이지
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </div>
+
+      {/* 3. 도안 그리드 섹션 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {patterns.map((pattern: any) => {
+          const designerName = pattern.designer?.name || "Unknown Designer";
+          const storeName =
+            pattern.pattern_sources?.[0]?.name || "Ravelry Store";
+
+          return (
+            <Card
+              key={pattern.id}
+              className="group overflow-hidden border-stone-200 hover:shadow-xl transition-all duration-300 rounded-xl bg-white"
+            >
+              <div className="aspect-square relative overflow-hidden bg-stone-100">
+                <img
+                  src={
+                    pattern.first_photo?.medium_url ||
+                    "/api/placeholder/400/400"
+                  }
+                  alt={pattern.name}
+                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                />
+                <Badge
+                  className={`absolute top-3 right-3 shadow-md ${
+                    pattern.free ? "bg-green-600" : "bg-blue-600"
+                  }`}
+                >
+                  {pattern.free ? "무료" : "유료"}
+                </Badge>
+              </div>
+
+              <CardHeader className="p-5 pb-2 space-y-1">
+                <CardTitle className="text-lg font-bold line-clamp-1 text-stone-800 tracking-tight group-hover:text-stone-600 transition-colors">
+                  {pattern.name}
+                </CardTitle>
+                <div className="flex items-center text-xs text-stone-500 gap-1">
+                  <span className="font-medium text-stone-400">by</span>
+                  <span className="font-semibold">{designerName}</span>
+                </div>
+              </CardHeader>
+
+              <CardContent className="p-5 pt-0 space-y-4">
+                <div className="flex items-center gap-1.5 text-[11px] text-stone-400 border-t border-stone-50 pt-3">
+                  <span className="bg-stone-100 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                    STORE
+                  </span>
+                  <span className="truncate">{storeName}</span>
+                </div>
+
+                <div className="flex justify-between items-center pt-1">
+                  <div className="flex items-center space-x-1">
+                    <span className="text-amber-500 text-xs">⭐</span>
+                    <span className="text-xs font-bold text-stone-400">
+                      상세정보 확인
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-stone-300 text-stone-700 hover:bg-stone-900 hover:text-white transition-colors h-8 px-4 rounded-lg text-xs"
+                    asChild
+                  >
+                    <Link href={`/pattern/${pattern.id}`}>상세보기</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* 4. 숫자 페이지네이션 컨트롤 */}
+      <div className="flex flex-col items-center space-y-4 py-10">
+        <div className="flex justify-center items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={currentPage <= 1}
+            asChild={currentPage > 1}
+            className="rounded-full"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <Link href={getPageUrl(currentPage - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+
+          {pageNumbers.map((pageNum) => (
+            <Button
+              key={pageNum}
+              variant={pageNum === currentPage ? "default" : "ghost"}
+              size="sm"
+              className={`w-10 h-10 rounded-full ${pageNum === currentPage ? "bg-stone-800" : "text-stone-600 hover:bg-stone-100"}`}
+              asChild
+            >
+              <Link href={getPageUrl(pageNum)}>{pageNum}</Link>
+            </Button>
+          ))}
+
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={currentPage >= totalPages}
+            asChild={currentPage < totalPages}
+            className="rounded-full"
           >
-            Documentation
-          </a>
+            <Link href={getPageUrl(currentPage + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
-      </main>
+        <p className="text-sm text-stone-400 font-medium tracking-tight">
+          {currentPage} / {totalPages} 페이지
+        </p>
+      </div>
     </div>
   );
 }
