@@ -84,11 +84,13 @@ export default async function HomePage({
             className="h-10 px-4 rounded-full border border-stone-200 bg-white text-sm text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400 w-full md:w-44"
           >
             <option value="">모든 종류</option>
-            <option value="softies">🧸 인형/소품</option>
-            <option value="clothing">🧶 의류</option>
-            <option value="accessories">🧣 액세서리</option>
-            <option value="home">🏠 인테리어</option>
-            <option value="pet">🐾 반려동물</option>
+            <option value="softies">🧸 인형/아미구루미</option>
+            <option value="clothing">🧶 의류 (니트/가디건)</option>
+            <option value="bag">👜 가방/파우치</option>
+            <option value="accessories">🧣 모자/목도리/소품</option>
+            <option value="home">🏠 홈데코/인테리어</option>
+            <option value="components">✨ 모티브/장식요소</option>
+            <option value="pet">🐾 반려동물 용품</option>
           </select>
 
           <select
