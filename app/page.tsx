@@ -93,7 +93,6 @@ export default async function HomePage({
             <option value="home">🏠 홈데코/인테리어</option>
             <option value="cozy">☕ 컵홀더/주방소품</option>
             <option value="pet">🐾 반려동물 용품</option>
-            <option value="motif">✨ 모티브/그래니스퀘어</option>
           </select>
 
           <select
