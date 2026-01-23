@@ -3,20 +3,30 @@ export async function getPatterns(
   query: string = "",
   page: number = 1,
   free: string = "",
+  pc: string = "", // 카테고리 파라미터 추가
 ) {
   const auth = Buffer.from(
     `${process.env.RAVELRY_USER_ID}:${process.env.RAVELRY_API_KEY}`,
   ).toString("base64");
 
-  // free 값이 있으면 &free=yes 또는 &free=no 를 붙여줍니다.
-  let url = `https://api.ravelry.com/patterns/search.json?query=${query}&page=${page}&page_size=9`;
-  if (free) url += `&availability=${free}`;
+  const params = new URLSearchParams({
+    query: query,
+    page: page.toString(),
+    page_size: "9",
+    craft: "crochet", // 코바늘 도안으로 고정 (선택 사항)
+  });
+
+  if (free) params.append("availability", free);
+  if (pc) params.append("pc", pc); // 카테고리가 있으면 pc 파라미터 추가
+
+  const url = `https://api.ravelry.com/patterns/search.json?${params.toString()}`;
 
   const res = await fetch(url, {
     headers: { Authorization: `Basic ${auth}` },
     next: { revalidate: 3600 },
   });
 
+  if (!res.ok) throw new Error("API 호출 실패");
   return res.json();
 }
 
