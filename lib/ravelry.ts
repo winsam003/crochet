@@ -3,7 +3,8 @@ export async function getPatterns(
   query: string = "",
   page: number = 1,
   free: string = "",
-  pc: string = "", // 카테고리 파라미터 추가
+  pc: string = "",
+  sort: string = "", // 정렬 파라미터 추가
 ) {
   const auth = Buffer.from(
     `${process.env.RAVELRY_USER_ID}:${process.env.RAVELRY_API_KEY}`,
@@ -13,11 +14,18 @@ export async function getPatterns(
     query: query,
     page: page.toString(),
     page_size: "9",
-    craft: "crochet", // 코바늘 도안으로 고정 (선택 사항)
+    craft: "crochet",
   });
 
   if (free) params.append("availability", free);
-  if (pc) params.append("pc", pc); // 카테고리가 있으면 pc 파라미터 추가
+  if (pc) params.append("pc", pc);
+
+  // 정렬 옵션 추가 (기본값은 'best'나 'projects')
+  if (sort) {
+    params.append("sort", sort);
+  } else {
+    params.append("sort", "best"); // 기본값: 추천순
+  }
 
   const url = `https://api.ravelry.com/patterns/search.json?${params.toString()}`;
 
