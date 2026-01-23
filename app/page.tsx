@@ -83,15 +83,15 @@ export default async function HomePage({
             defaultValue={categoryFilter}
             className="h-10 px-4 rounded-full border border-stone-200 bg-white text-sm text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400 w-full md:w-44"
           >
-            <option value="">모든 종류</option>
             <option value="softies">🧸 인형/아미구루미</option>
+            <option value="ornaments">🔑 키링/작은장식</option>
             <option value="clothing">🧶 의류 (스웨터/탑)</option>
             <option value="bag">👜 가방/파우치</option>
             <option value="hat">👒 모자/비니</option>
-            <option value="neck-torso">🧣 목도리/숄</option>
+            <option value="hands">🧤 장갑/핸드워머</option>
             <option value="socks">🧦 양말/신발</option>
+            <option value="accessories">🧣 목도리/기타소품</option>
             <option value="home">🏠 홈데코/인테리어</option>
-            <option value="cozy">☕ 컵홀더/주방소품</option>
             <option value="pet">🐾 반려동물 용품</option>
           </select>
 
