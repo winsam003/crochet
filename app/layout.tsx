@@ -5,28 +5,16 @@ import "./globals.css";
 import Link from "next/link";
 import Script from "next/script";
 import AdFit from "@/lib/Adfit";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <meta
-        name="google-site-verification"
-        content="RNkeSZzWbR8T4Pp_OTNspdHciimBargpK1SBOpatEyY"
-      />
-      <meta
-        name="naver-site-verification"
-        content="3afbf9d6c09fc55895f2273c277d6c41dafa7ada"
-      />
-      <body
-        className={`${inter.className} bg-stone-50 text-stone-900`}
-        suppressHydrationWarning
-      >
+      <meta name="google-site-verification" content="RNkeSZzWbR8T4Pp_OTNspdHciimBargpK1SBOpatEyY" />
+      <meta name="naver-site-verification" content="3afbf9d6c09fc55895f2273c277d6c41dafa7ada" />
+      <body className={`${inter.className} bg-stone-50 text-stone-900`} suppressHydrationWarning>
         <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur">
           <div className="container mx-auto flex h-16 items-center justify-between px-4">
             <Link href="/" className="text-xl font-bold tracking-tighter">
@@ -47,9 +35,7 @@ export default function RootLayout({
             </aside>
 
             {/* [중앙 콘텐츠] */}
-            <main className="w-full max-w-5xl px-4 sm:px-6 shrink-0">
-              {children}
-            </main>
+            <main className="w-full max-w-5xl px-4 sm:px-6 shrink-0">{children}</main>
 
             {/* [우측 광고] */}
             <aside className="hidden 2xl:block w-[160px]">
@@ -82,14 +68,11 @@ export default function RootLayout({
             <div className="text-xs text-stone-500 space-y-1 leading-relaxed">
               <p>
                 이 서비스는 세계 최대 뜨개질 커뮤니티인{" "}
-                <span className="font-semibold">Ravelry</span>의 데이터를
-                기반으로 합니다.
+                <span className="font-semibold">Ravelry</span>의 데이터를 기반으로 합니다.
               </p>
               <p className="text-stone-400">
                 대부분의 도안 정보가{" "}
-                <span className="text-amber-600 font-medium">
-                  영문으로 제공
-                </span>
+                <span className="text-amber-600 font-medium">영문으로 제공</span>
                 되는 점 참고 부탁드립니다.
               </p>
             </div>
@@ -98,6 +81,7 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
