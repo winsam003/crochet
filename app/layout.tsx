@@ -12,6 +12,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
+      <meta
+        name="google-site-verification"
+        content="RNkeSZzWbR8T4Pp_OTNspdHciimBargpK1SBOpatEyY"
+      />
+      <meta
+        name="naver-site-verification"
+        content="3afbf9d6c09fc55895f2273c277d6c41dafa7ada"
+      />
       <body
         className={`${inter.className} bg-stone-50 text-stone-900`}
         suppressHydrationWarning
