@@ -145,7 +145,7 @@ export default async function PatternDetailPage({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    🪄 도안 다운로드
+                    🪄 도안 확인하기
                   </a>
                 </Button>
               ) : (
@@ -157,10 +157,19 @@ export default async function PatternDetailPage({
                 </Button>
               )}
 
-              <p className="text-center text-xs text-stone-400">
-                {pattern.free
-                  ? "* 버튼을 누르면 Ravelry 다운로드 페이지로 이동합니다."
-                  : "* 이 도안은 유료이므로 Ravelry에서 별도 구매가 필요합니다."}
+              <p className="text-center text-xs text-stone-400 leading-relaxed">
+                {pattern.free ? (
+                  <>
+                    * 버튼을 누르면 Ravelry 다운로드 페이지로 이동합니다.
+                    <br />
+                    <span className="text-amber-600 font-medium">
+                      (주의: 디자이너의 설정에 따라 무료 기간이 종료되어 유료로
+                      전환되었을 수 있으니 이동 후 무료 여부를 꼭 확인하세요!)
+                    </span>
+                  </>
+                ) : (
+                  "* 이 도안은 유료이므로 Ravelry에서 별도 구매가 필요합니다."
+                )}
               </p>
             </CardContent>
           </Card>
