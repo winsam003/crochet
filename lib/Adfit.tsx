@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function AdFit({
   unit,
@@ -11,18 +11,24 @@ export default function AdFit({
   width: string;
   height: string;
 }) {
-  useEffect(() => {
-    // 1. 윈도우 객체에 adfit이 없을 때만 스크립트 로드
-    const script = document.createElement("script");
-    script.src = "//t1.daumcdn.net/kas/static/ba.min.js";
-    script.async = true;
-    document.body.appendChild(script);
+  const adRef = useRef<boolean>(false);
 
-    return () => {
-      // 컴포넌트가 사라질 때 스크립트 정리 (선택사항)
-      document.body.removeChild(script);
-    };
-  }, [unit]); // 유닛 ID가 바뀔 때마다 다시 실행
+  useEffect(() => {
+    // 1. 이미 스크립트가 로드되었는지 확인
+    const isScriptLoaded = document.querySelector(
+      'script[src="//t1.daumcdn.net/kas/static/ba.min.js"]'
+    );
+
+    if (!isScriptLoaded) {
+      const script = document.createElement("script");
+      script.src = "//t1.daumcdn.net/kas/static/ba.min.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    // 2. 광고 영역이 리렌더링될 때 애드핏이 다시 인식하도록 처리 (선택사항)
+    // 애드핏 스크립트가 로드된 후 윈도우 객체에 등록된 함수를 호출할 수 있습니다.
+  }, [unit]);
 
   return (
     <div className="flex justify-center items-center w-full overflow-hidden min-h-[250px]">
