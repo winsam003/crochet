@@ -2,7 +2,7 @@ import { getPatternDetail } from "@/lib/ravelry";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, Scissors, Ruler, Star, Heart } from "lucide-react";
+import { ChevronLeft, Scissors, Ruler, Star, Heart, Languages } from "lucide-react";
 import Link from "next/link";
 import AdFit from "@/lib/Adfit";
 
@@ -129,7 +129,7 @@ export default async function PatternDetailPage({
               </div>
             </div>
           </div>
-          {/* 도안 설명 및 번역 엔진 섹션 */}
+          {/* 도안 설명 섹션 */}
           <Card className="rounded-3xl border-none shadow-xl overflow-hidden">
             <div className="bg-stone-900 p-4 text-white flex justify-between items-center">
               <span className="font-bold flex items-center gap-2">
@@ -139,11 +139,30 @@ export default async function PatternDetailPage({
                 </span>
                 도안 상세 설명
               </span>
+
+              {/* 구글 번역기 버튼 추가 */}
+              {pattern.notes && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="bg-white/10 hover:bg-white/20 border-white/20 text-white text-[11px] h-7"
+                >
+                  <a
+                    href={`https://translate.google.com/?sl=en&tl=ko&text=${encodeURIComponent(
+                      pattern.notes
+                    )}&op=translate`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Languages className="mr-1.5 h-3 w-3" /> 구글번역기로 번역하기
+                  </a>
+                </Button>
+              )}
             </div>
             <CardContent className="p-8 space-y-6">
               <div className="space-y-4">
                 <div className="bg-stone-50 p-6 rounded-2xl text-stone-600 text-sm leading-relaxed whitespace-pre-wrap border border-stone-100">
-                  {/* 영문 Notes를 한글로 바꿀 엔진이 작동할 영역 */}
                   {pattern.notes || "등록된 설명이 없습니다."}
                 </div>
               </div>
