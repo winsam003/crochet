@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, Scissors, Ruler, Star, Heart } from "lucide-react";
 import Link from "next/link";
+import AdFit from "@/lib/Adfit";
 
 export default async function PatternDetailPage({
   params,
@@ -114,7 +115,20 @@ export default async function PatternDetailPage({
               </span>
             </div>
           </div>
+          {/* [NEW] 2.5 중단 배너 광고 섹션 - 300x250 최적화 */}
+          <div className="w-full flex justify-center py-2">
+            <div className="w-[300px] h-[250px] bg-white border border-stone-200 rounded-2xl flex flex-col items-center justify-center shadow-sm overflow-hidden relative group">
+              {/* 광고 라벨 (애드핏 정책상 있으면 좋음) */}
+              <span className="absolute top-2 right-3 text-[9px] text-stone-300 font-bold tracking-widest uppercase">
+                ADVERTISEMENT
+              </span>
 
+              <div className="w-full h-full flex items-center justify-center text-[11px] text-stone-400 font-bold bg-stone-50/50">
+                {/* 여기에 카카오 애드핏 300x250 스크립트 삽입 */}
+                <AdFit unit="DAN-kS3c01Bcu5rrcqvI" width="300" height="250" />
+              </div>
+            </div>
+          </div>
           {/* 도안 설명 및 번역 엔진 섹션 */}
           <Card className="rounded-3xl border-none shadow-xl overflow-hidden">
             <div className="bg-stone-900 p-4 text-white flex justify-between items-center">
