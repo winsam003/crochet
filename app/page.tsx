@@ -27,13 +27,7 @@ export default async function HomePage({
   const categoryFilter = params.category || "";
   const sortFilter = params.sort || "best";
 
-  const data = await getPatterns(
-    currentQuery,
-    currentPage,
-    freeFilter,
-    categoryFilter,
-    sortFilter,
-  );
+  const data = await getPatterns(currentQuery, currentPage, freeFilter, categoryFilter, sortFilter);
   const patterns = data.patterns || [];
   const paginator = data.paginator;
   const totalPages = paginator?.page_count || 1;
@@ -128,9 +122,13 @@ export default async function HomePage({
                   className="w-full h-12 px-4 rounded-2xl border border-stone-100 bg-stone-50 text-sm font-bold text-stone-700 outline-none focus:ring-2 focus:ring-stone-200 shadow-sm cursor-pointer"
                 >
                   <option value="best">추천순</option>
+                  <option value="favorites">좋아요순</option>
+                  <option value="rating">별점순</option>
+                  <option value="difficulty">난이도순</option>
                   <option value="popular">인기순</option>
                   <option value="projects">작품순</option>
                   <option value="recently-popular">최신유행</option>
+                  <option value="created_at">최신 등록순</option>
                 </select>
               </div>
             </div>
@@ -158,10 +156,7 @@ export default async function HomePage({
 
         <div className="flex justify-between items-center pt-4 border-t border-stone-50">
           <p className="text-sm font-bold text-stone-500">
-            총{" "}
-            <span className="text-stone-900">
-              {totalResults.toLocaleString()}
-            </span>
+            총 <span className="text-stone-900">{totalResults.toLocaleString()}</span>
             개의 결과
           </p>
           <Badge
@@ -197,9 +192,7 @@ export default async function HomePage({
           >
             <div className="aspect-square relative overflow-hidden">
               <img
-                src={
-                  pattern.first_photo?.medium_url || "/api/placeholder/400/400"
-                }
+                src={pattern.first_photo?.medium_url || "/api/placeholder/400/400"}
                 alt={pattern.name}
                 className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
               />
