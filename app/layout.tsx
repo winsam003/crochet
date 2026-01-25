@@ -3,17 +3,46 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import { Metadata } from "next";
 import Script from "next/script";
 import AdFit from "@/lib/Adfit";
 import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
+// ✅ SEO를 위한 핵심 설정
+export const metadata: Metadata = {
+  title: "WinSam Crochet - Ravelry 뜨개질 도안 검색 서비스",
+  description:
+    "Ravelry 데이터를 기반으로 다양한 뜨개질 및 코바늘 도안을 검색해보세요. 나만의 스타일을 찾는 뜨개질 여행!",
+  keywords: [
+    "뜨개질",
+    "코바늘",
+    "도안 검색",
+    "Ravelry",
+    "코바늘 도안",
+    "코바늘 무료도안",
+    "대바늘 도안",
+    "대바늘 무료 도안",
+  ],
+  openGraph: {
+    title: "WinSam Crochet - 뜨개질 도안 검색 서비스",
+    description: "영문 도안부터 다양한 스타일까지, WinSam Crochet에서 찾아보세요.",
+    url: "https://crochet.winsam.xyz", // 실제 도메인으로 변경
+    siteName: "WinSam Crochet",
+    locale: "ko_KR",
+    type: "website",
+  },
+  verification: {
+    google: "RNkeSZzWbR8T4Pp_OTNspdHciimBargpK1SBOpatEyY",
+    other: {
+      "naver-site-verification": "3afbf9d6c09fc55895f2273c277d6c41dafa7ada",
+    },
+  },
+};
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <meta name="google-site-verification" content="RNkeSZzWbR8T4Pp_OTNspdHciimBargpK1SBOpatEyY" />
-      <meta name="naver-site-verification" content="3afbf9d6c09fc55895f2273c277d6c41dafa7ada" />
       <body className={`${inter.className} bg-stone-50 text-stone-900`} suppressHydrationWarning>
         <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur">
           <div className="container mx-auto flex h-16 items-center justify-between px-4">
