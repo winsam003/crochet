@@ -18,6 +18,7 @@ export default async function HomePage({
     free?: string;
     category?: string;
     sort?: string;
+    craft?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -26,8 +27,16 @@ export default async function HomePage({
   const freeFilter = params.free || "";
   const categoryFilter = params.category || "";
   const sortFilter = params.sort || "best";
+  const craftFilter = params.craft || "crochet";
 
-  const data = await getPatterns(currentQuery, currentPage, freeFilter, categoryFilter, sortFilter);
+  const data = await getPatterns(
+    currentQuery,
+    currentPage,
+    freeFilter,
+    categoryFilter,
+    sortFilter,
+    craftFilter,
+  );
   const patterns = data.patterns || [];
   const paginator = data.paginator;
   const totalPages = paginator?.page_count || 1;
@@ -50,6 +59,7 @@ export default async function HomePage({
     const urlParams = new URLSearchParams({
       query: currentQuery,
       page: page.toString(),
+      craft: craftFilter,
       ...(freeFilter && { free: freeFilter }),
       ...(categoryFilter && { category: categoryFilter }),
       ...(sortFilter && { sort: sortFilter }),
@@ -74,6 +84,20 @@ export default async function HomePage({
         <form action="/" method="GET" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
             {/* 카테고리 셀렉트 */}
+            {/* [추가] 4. 공예 종류 선택 (코바늘/대바늘) - 2컬럼 할당 */}
+            <div className="lg:col-span-2 space-y-2">
+              <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest ml-1">
+                공예
+              </label>
+              <select
+                name="craft"
+                defaultValue={craftFilter}
+                className="w-full h-12 px-4 rounded-2xl border border-stone-100 bg-stone-50 text-sm font-bold text-stone-700 outline-none focus:ring-2 focus:ring-stone-200 shadow-sm cursor-pointer"
+              >
+                <option value="crochet">🧶 코바늘</option>
+                <option value="knitting">🥢 대바늘</option>
+              </select>
+            </div>
             <div className="lg:col-span-3 space-y-2">
               <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                 <Filter className="w-3 h-3" /> 종류
@@ -134,7 +158,7 @@ export default async function HomePage({
             </div>
 
             {/* 검색창 및 버튼 */}
-            <div className="lg:col-span-5 flex gap-2">
+            <div className="lg:col-span-12 flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
                 <Input

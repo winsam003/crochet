@@ -5,6 +5,7 @@ export async function getPatterns(
   free: string = "",
   pc: string = "",
   sort: string = "", // 정렬 파라미터 추가
+  craft: string = "crochet",
 ) {
   const auth = Buffer.from(
     `${process.env.RAVELRY_USER_ID}:${process.env.RAVELRY_API_KEY}`,
@@ -14,7 +15,7 @@ export async function getPatterns(
     query: query,
     page: page.toString(),
     page_size: "9",
-    craft: "crochet",
+    craft: craft,
   });
 
   if (free) params.append("availability", free);
