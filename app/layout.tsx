@@ -58,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* [좌측 광고] aside는 기둥 역할을 합니다. */}
             <aside className="hidden 2xl:block w-[160px]">
               {/* 실제 움직이는 것은 이 div입니다. */}
-              <div className="sticky top-24 w-[160px] h-[600px] bg-white border border-stone-200 rounded-3xl flex items-center justify-center text-[10px] text-stone-300 shadow-sm font-bold">
+              <div className="sticky top-24 w-[160px] h-[600px] bg-white border border-stone-200 flex items-center justify-center text-[10px] text-stone-300 shadow-sm font-bold">
                 <AdFit unit="DAN-h19L3JpqEVNOWZtk" width="160" height="600" />
               </div>
             </aside>
@@ -69,7 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* [우측 광고] */}
             <aside className="hidden 2xl:block w-[160px]">
               {/* 실제 움직이는 것은 이 div입니다. */}
-              <div className="sticky top-24 w-[160px] h-[600px] bg-white border border-stone-200 rounded-3xl flex items-center justify-center text-[10px] text-stone-300 shadow-sm font-bold">
+              <div className="sticky top-24 w-[160px] h-[600px] bg-white border border-stone-200 items-center justify-center text-[10px] text-stone-300 shadow-sm font-bold">
                 <AdFit unit="DAN-7Wqj3cnxmklPlmCw" width="160" height="600" />
               </div>
             </aside>
@@ -78,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* [NEW] 2.5 중단 배너 광고 섹션 - 300x250 최적화 */}
         <div className="w-full flex justify-center py-2">
-          <div className="w-[300px] h-[250px] bg-white border border-stone-200 rounded-2xl flex flex-col items-center justify-center shadow-sm overflow-hidden relative group">
+          <div className="w-[300px] h-[250px] bg-white border border-stone-200 flex flex-col items-center justify-center shadow-sm relative group">
             {/* 광고 라벨 (애드핏 정책상 있으면 좋음) */}
             <span className="absolute top-2 right-3 text-[9px] text-stone-300 font-bold tracking-widest uppercase">
               ADVERTISEMENT

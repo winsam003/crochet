@@ -170,7 +170,7 @@ export default async function HomePage({
 
       {/* [NEW] 2.5 중단 배너 광고 섹션 - 300x250 최적화 */}
       <div className="w-full flex justify-center py-2">
-        <div className="w-[300px] h-[250px] bg-white border border-stone-200 rounded-2xl flex flex-col items-center justify-center shadow-sm overflow-hidden relative group">
+        <div className="w-[300px] h-[250px] bg-white border border-stone-200 flex flex-col items-center justify-center shadow-sm relative group">
           {/* 광고 라벨 (애드핏 정책상 있으면 좋음) */}
           <span className="absolute top-2 right-3 text-[9px] text-stone-300 font-bold tracking-widest uppercase">
             ADVERTISEMENT
