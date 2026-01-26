@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import Link from "next/link";
 import AdFit from "@/lib/Adfit";
+import HotPatterns from "@/components/HotPatterns";
 
 export default async function HomePage({
   searchParams,
@@ -19,6 +20,7 @@ export default async function HomePage({
     category?: string;
     sort?: string;
     craft?: string;
+    hot_cat?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -28,6 +30,7 @@ export default async function HomePage({
   const categoryFilter = params.category || "";
   const sortFilter = params.sort || "best";
   const craftFilter = params.craft || "crochet";
+  const hotCat = params.hot_cat || ""; // 인기 차트용
 
   const data = await getPatterns(
     currentQuery,
@@ -78,7 +81,7 @@ export default async function HomePage({
           "전 세계의 예쁜 코바늘 도안을 한눈에"
         </p>
       </section>
-
+      <HotPatterns category={hotCat} craft={craftFilter} searchParams={params} />
       {/* 2. 필터 및 검색 섹션: 레이아웃 그룹화 및 정렬 최적화 */}
       <div className="bg-white p-8 rounded-[2.5rem] border border-stone-200 shadow-sm space-y-8">
         <form action="/" method="GET" className="space-y-6">
@@ -191,7 +194,6 @@ export default async function HomePage({
           </Badge>
         </div>
       </div>
-
       {/* [NEW] 2.5 중단 배너 광고 섹션 - 300x250 최적화 */}
       <div className="w-full flex justify-center py-2">
         <div className="w-[300px] h-[250px] bg-white border border-stone-200 flex flex-col items-center justify-center shadow-sm relative group">
@@ -206,7 +208,6 @@ export default async function HomePage({
           </div>
         </div>
       </div>
-
       {/* 3. 도안 그리드: 카드 디자인 정교화 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {patterns.map((pattern: any) => (
@@ -252,7 +253,6 @@ export default async function HomePage({
           </Card>
         ))}
       </div>
-
       {/* 4. 페이지네이션: 버튼 크기 및 폰트 조정 */}
       <div className="flex flex-col items-center gap-6 py-16">
         <div className="flex justify-center items-center gap-2">

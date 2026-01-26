@@ -90,3 +90,31 @@ export async function getRelatedPatterns(category: string, craft: string, weight
     return []; // 네트워크 에러 시 빈 배열 반환
   }
 }
+// lib/ravelry.ts
+
+export async function getHotPatterns(category: string = "", craft: string = "crochet") {
+  const auth = Buffer.from(
+    `${process.env.RAVELRY_USER_ID}:${process.env.RAVELRY_API_KEY}`,
+  ).toString("base64");
+
+  // sort=recently-popular 를 쓰면 투박함을 줄이고 최신 트렌드를 가져옵니다.
+  const params = new URLSearchParams({
+    sort: "recently-popular",
+    page_size: "10",
+    photo: "yes",
+    craft: craft, // 코바늘/대바늘 구분
+  });
+
+  if (category) params.append("pc", category);
+
+  const url = `https://api.ravelry.com/patterns/search.json?${params.toString()}`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Basic ${auth}` },
+    next: { revalidate: 600 },
+  });
+
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.patterns || [];
+}

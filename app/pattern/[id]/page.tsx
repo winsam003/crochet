@@ -6,6 +6,8 @@ import { ChevronLeft, Scissors, Ruler, Star, Heart, Languages } from "lucide-rea
 import Link from "next/link";
 import AdFit from "@/lib/Adfit";
 import RelatedPatterns from "@/components/RelatedPatterns";
+import { translateYarnWeight, translateNeedleSize } from "@/lib/utils";
+import HotPatterns from "@/components/HotPatterns";
 
 export default async function PatternDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -83,14 +85,31 @@ export default async function PatternDetailPage({ params }: { params: Promise<{ 
               <Ruler className="w-4 h-4 text-stone-400" />
               <span className="text-xs text-stone-400 font-bold uppercase">바늘 크기</span>
               <span className="text-lg font-black text-stone-800">
-                {pattern.pattern_needle_sizes[0]?.metric}mm
+                {pattern.pattern_needle_sizes?.length > 0 ? (
+                  <>
+                    <div className="flex flex-col justify-center items-center">
+                      {pattern.pattern_needle_sizes[0].metric}mm
+                      <div className="text-sm ml-1 font-medium text-stone-500">
+                        {/* craft 변수를 사용하여 코바늘/대바늘 호수 출력 */}
+                        {translateNeedleSize(pattern.pattern_needle_sizes[0].metric, craft)}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  "정보 없음"
+                )}
               </span>
             </div>
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center space-y-1">
               <Scissors className="w-4 h-4 text-stone-400" />
               <span className="text-xs text-stone-400 font-bold uppercase">실 굵기</span>
               <span className="text-[13px] font-black text-stone-800 text-center leading-tight">
-                {pattern.yarn_weight_description}
+                {/* 원문(Bulky) 대신 한국식 설명(매우 굵은 실)을 보여줍니다 */}
+                {translateYarnWeight(pattern.yarn_weight_description)}
+                <br />
+                <span className="text-[10px] text-stone-400 font-normal">
+                  ({pattern.yarn_weight_description})
+                </span>
               </span>
             </div>
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center space-y-1">
