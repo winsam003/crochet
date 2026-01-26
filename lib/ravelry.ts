@@ -59,3 +59,34 @@ export async function getPatternDetail(id: string) {
   // 라벨리 상세 API는 응답이 { pattern: { ... } } 구조로 옵니다.
   return data.pattern;
 }
+
+export async function getRelatedPatterns(category: string, craft: string, weight: string) {
+  try {
+    const auth = Buffer.from(
+      `${process.env.RAVELRY_USER_ID}:${process.env.RAVELRY_API_KEY}`,
+    ).toString("base64");
+
+    const response = await fetch(
+      `https://api.ravelry.com/patterns/search.json?pc=${category}&craft=${craft}&weight=${weight}&page_size=10&sort=best&photo=yes`,
+      {
+        headers: {
+          Authorization: `Basic ${auth}`,
+        },
+        // 캐시 설정 (성능 최적화)
+        next: { revalidate: 3600 },
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Ravelry API Error Text:", errorText);
+      return []; // 에러 시 빈 배열 반환해서 페이지 중단 방지
+    }
+
+    const data = await response.json();
+    return data.patterns || [];
+  } catch (error) {
+    console.error("fetch error:", error);
+    return []; // 네트워크 에러 시 빈 배열 반환
+  }
+}

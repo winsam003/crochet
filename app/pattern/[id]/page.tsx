@@ -5,14 +5,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, Scissors, Ruler, Star, Heart, Languages } from "lucide-react";
 import Link from "next/link";
 import AdFit from "@/lib/Adfit";
+import RelatedPatterns from "@/components/RelatedPatterns";
 
-export default async function PatternDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function PatternDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const pattern = await getPatternDetail(id);
+
+  // API 응답 구조에 맞게 데이터 추출 (Ravelry 상세 API 기준)
+  const category = pattern.pattern_categories?.[0]?.permalink || "";
+  const craft = pattern.craft?.permalink || "crochet";
+  const weight = pattern.yarn_weight?.slug || "";
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8 bg-stone-50/50 min-h-screen">
@@ -39,11 +41,7 @@ export default async function PatternDetailPage({
                 key={photo.id}
                 className="rounded-xl overflow-hidden border-2 border-white shadow-sm aspect-square"
               >
-                <img
-                  src={photo.small_url}
-                  alt="sub"
-                  className="w-full h-full object-cover"
-                />
+                <img src={photo.small_url} alt="sub" className="w-full h-full object-cover" />
               </div>
             ))}
           </div>
@@ -55,9 +53,7 @@ export default async function PatternDetailPage({
             <div className="flex items-center gap-2">
               <Badge className="bg-stone-800 uppercase tracking-widest text-[10px]">
                 {/* 도안 타입 한글화: Toys -> 인형/소품 등 */}
-                {pattern.pattern_type.name === "Toys"
-                  ? "인형/소품"
-                  : pattern.pattern_type.name}
+                {pattern.pattern_type.name === "Toys" ? "인형/소품" : pattern.pattern_type.name}
               </Badge>
               {pattern.free ? (
                 <Badge className="bg-green-600">무료 도안</Badge>
@@ -65,9 +61,7 @@ export default async function PatternDetailPage({
                 <Badge className="bg-blue-600">유료 도안</Badge>
               )}
             </div>
-            <h1 className="text-4xl font-black text-stone-900 leading-tight">
-              {pattern.name}
-            </h1>
+            <h1 className="text-4xl font-black text-stone-900 leading-tight">{pattern.name}</h1>
             <p className="text-stone-500 font-medium">
               디자이너:{" "}
               <span className="text-stone-800 border-b border-stone-300">
@@ -80,39 +74,29 @@ export default async function PatternDetailPage({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center space-y-1">
               <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-              <span className="text-xs text-stone-400 font-bold uppercase">
-                난이도
-              </span>
+              <span className="text-xs text-stone-400 font-bold uppercase">난이도</span>
               <span className="text-lg font-black text-stone-800">
                 {pattern.difficulty_average?.toFixed(1) || "N/A"}
               </span>
             </div>
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center space-y-1">
               <Ruler className="w-4 h-4 text-stone-400" />
-              <span className="text-xs text-stone-400 font-bold uppercase">
-                바늘 크기
-              </span>
+              <span className="text-xs text-stone-400 font-bold uppercase">바늘 크기</span>
               <span className="text-lg font-black text-stone-800">
                 {pattern.pattern_needle_sizes[0]?.metric}mm
               </span>
             </div>
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center space-y-1">
               <Scissors className="w-4 h-4 text-stone-400" />
-              <span className="text-xs text-stone-400 font-bold uppercase">
-                실 굵기
-              </span>
+              <span className="text-xs text-stone-400 font-bold uppercase">실 굵기</span>
               <span className="text-[13px] font-black text-stone-800 text-center leading-tight">
                 {pattern.yarn_weight_description}
               </span>
             </div>
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center space-y-1">
               <Heart className="w-4 h-4 text-pink-400 fill-pink-400" />
-              <span className="text-xs text-stone-400 font-bold uppercase">
-                좋아요
-              </span>
-              <span className="text-lg font-black text-stone-800">
-                {pattern.favorites_count}
-              </span>
+              <span className="text-xs text-stone-400 font-bold uppercase">좋아요</span>
+              <span className="text-lg font-black text-stone-800">{pattern.favorites_count}</span>
             </div>
           </div>
           {/* [NEW] 2.5 중단 배너 광고 섹션 - 300x250 최적화 */}
@@ -150,7 +134,7 @@ export default async function PatternDetailPage({
                 >
                   <a
                     href={`https://translate.google.com/?sl=en&tl=ko&text=${encodeURIComponent(
-                      pattern.notes
+                      pattern.notes,
                     )}&op=translate`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -196,8 +180,8 @@ export default async function PatternDetailPage({
                     * 버튼을 누르면 Ravelry 다운로드 페이지로 이동합니다.
                     <br />
                     <span className="text-amber-600 font-medium">
-                      (주의: 디자이너의 설정에 따라 무료 기간이 종료되어 유료로
-                      전환되었을 수 있으니 이동 후 무료 여부를 꼭 확인하세요!)
+                      (주의: 디자이너의 설정에 따라 무료 기간이 종료되어 유료로 전환되었을 수 있으니
+                      이동 후 무료 여부를 꼭 확인하세요!)
                     </span>
                   </>
                 ) : (
@@ -208,6 +192,9 @@ export default async function PatternDetailPage({
           </Card>
         </div>
       </div>
+      {/* --- 연관 도안 섹션 추가 --- */}
+      <hr className="border-stone-200 mt-12" />
+      <RelatedPatterns category={category} craft={craft} weight={weight} />
     </div>
   );
 }
