@@ -1,298 +1,278 @@
-// app/page.tsx
-
-import { getPatterns } from "@/lib/ravelry";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Search, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import Link from "next/link";
-import AdFit from "@/lib/Adfit";
+import { Suspense } from "react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Search,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { getPatterns } from "@/lib/ravelry";
+import { CATEGORIES, SORTS, interpretSearch, type SearchParams } from "@/lib/patterns";
+import PatternCard from "@/components/PatternCard";
 import HotPatterns from "@/components/HotPatterns";
-
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    page?: string;
-    query?: string;
-    free?: string;
-    category?: string;
-    sort?: string;
-    craft?: string;
-    hot_cat?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const params = await searchParams;
-  const currentPage = Number(params.page) || 1;
-  const currentQuery = params.query || "";
-  const freeFilter = params.free || "";
-  const categoryFilter = params.category || "";
-  const sortFilter = params.sort || "best";
-  const craftFilter = params.craft || "crochet";
-  const hotCat = params.hot_cat || ""; // 인기 차트용
-
-  const data = await getPatterns(
-    currentQuery,
-    currentPage,
-    freeFilter,
-    categoryFilter,
-    sortFilter,
-    craftFilter,
+  const raw = await searchParams;
+  const params: SearchParams = Object.fromEntries(
+    Object.entries(raw).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]),
   );
-  const patterns = data.patterns || [];
-  const paginator = data.paginator;
-  const totalPages = paginator?.page_count || 1;
-  const totalResults = paginator?.results || 0;
-
-  const getPageNumbers = () => {
-    let start = Math.max(1, currentPage - 2);
-    let end = Math.min(totalPages, start + 4);
-    if (end - start < 4) start = Math.max(1, end - 4);
-    const pages = [];
-    for (let i = start; i <= end; i++) {
-      if (i >= 1 && i <= totalPages) pages.push(i);
-    }
-    return pages;
+  const s = interpretSearch(params);
+  const current = new URLSearchParams(
+    Object.entries(params).filter((v): v is [string, string] => typeof v[1] === "string"),
+  );
+  const returnTo = `/?${current}`;
+  const pageUrl = (page: number) => {
+    const next = new URLSearchParams(current);
+    next.set("page", String(page));
+    return `/?${next}#results`;
   };
-
-  const pageNumbers = getPageNumbers();
-
-  const getPageUrl = (page: number) => {
-    const urlParams = new URLSearchParams({
-      query: currentQuery,
-      page: page.toString(),
-      craft: craftFilter,
-      ...(freeFilter && { free: freeFilter }),
-      ...(categoryFilter && { category: categoryFilter }),
-      ...(sortFilter && { sort: sortFilter }),
-    });
-    return `/?${urlParams.toString()}`;
-  };
-
+  let data;
+  try {
+    data = await getPatterns(params);
+  } catch {
+    /* Show a recoverable error, never fabricated patterns. */
+  }
+  const patterns = data?.patterns || [],
+    totalPages = data?.paginator.page_count || 1;
+  const active = !!(
+    params.query ||
+    params.category ||
+    params.free ||
+    params.format ||
+    params.difficulty ||
+    params.language
+  );
   return (
-    <div className="container mx-auto px-4 py-12 space-y-12 max-w-6xl">
-      {/* 1. 배너 섹션: 폰트 두께와 간격 미세 조정 */}
-      <section className="text-center py-16 bg-stone-50 rounded-[3rem] space-y-4 border border-stone-100 shadow-sm">
-        <h1 className="text-5xl md:text-6xl font-black tracking-tighter text-stone-900">
-          WinSam Crochet
-        </h1>
-        <p className="text-stone-500 max-w-2xl mx-auto text-lg font-medium italic">
-          "전 세계의 예쁜 코바늘 도안을 한눈에"
-        </p>
+    <div className="page-shell">
+      <section className="home-intro">
+        <div>
+          <p className="eyebrow accent">A LITTLE TIME, A FEW STITCHES</p>
+          <h1>
+            다음에 뜰 것은
+            <br />
+            <em>어떤 모습인가요?</em>
+          </h1>
+          <p className="intro-description">
+            마음에 드는 도안부터 준비할 실과 바늘까지.
+            <br />한 코씩 시작할 수 있도록, 함께 살펴보세요.
+          </p>
+        </div>
+        <div className="intro-note">
+          <span className="note-number">01 —</span>
+          <p>
+            찾고, 살펴보고,
+            <br />
+            나만의 것으로.
+          </p>
+          <Link href="/guide">
+            영문 도안이 처음이라면 <ArrowUpRight size={16} />
+          </Link>
+        </div>
       </section>
-      <HotPatterns category={hotCat} craft={craftFilter} searchParams={params} />
-      {/* 2. 필터 및 검색 섹션: 레이아웃 그룹화 및 정렬 최적화 */}
-      <div className="bg-white p-8 rounded-[2.5rem] border border-stone-200 shadow-sm space-y-8">
-        <form action="/" method="GET" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-            {/* 카테고리 셀렉트 */}
-            {/* [추가] 4. 공예 종류 선택 (코바늘/대바늘) - 2컬럼 할당 */}
-            <div className="lg:col-span-2 space-y-2">
-              <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest ml-1">
-                공예
-              </label>
-              <select
-                name="craft"
-                defaultValue={craftFilter}
-                className="w-full h-12 px-4 rounded-2xl border border-stone-100 bg-stone-50 text-sm font-bold text-stone-700 outline-none focus:ring-2 focus:ring-stone-200 shadow-sm cursor-pointer"
-              >
-                <option value="crochet">🧶 코바늘</option>
-                <option value="knitting">🥢 대바늘</option>
+      <section className="search-section" aria-label="도안 검색">
+        <form action="/" method="GET">
+          <div className="search-main">
+            <Search size={22} />
+            <label className="sr-only" htmlFor="query">
+              찾고 싶은 도안
+            </label>
+            <input
+              id="query"
+              name="query"
+              defaultValue={params.query || ""}
+              placeholder="무엇을 뜨고 싶으세요? 예: 초보 코바늘 가방"
+              maxLength={160}
+            />
+            <button className="primary-button" type="submit">
+              도안 찾기 <ArrowRight size={17} />
+            </button>
+          </div>
+          <div className="filter-row">
+            <label>
+              뜨개 종류
+              <select name="craft" defaultValue={s.craft}>
+                <option value="crochet">코바늘</option>
+                <option value="knitting">대바늘</option>
               </select>
-            </div>
-            <div className="lg:col-span-3 space-y-2">
-              <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                <Filter className="w-3 h-3" /> 종류
-              </label>
-              <select
-                name="category"
-                defaultValue={categoryFilter}
-                className="w-full h-12 px-4 rounded-2xl border border-stone-100 bg-stone-50 text-sm font-bold text-stone-700 outline-none focus:ring-2 focus:ring-stone-200 transition-all cursor-pointer appearance-none shadow-sm"
-              >
-                <option value="">모든 카테고리</option>
-                <option value="softies">🧸 인형/아미구루미</option>
-                <option value="accessories">🧣 목도리/기타소품</option>
-                <option value="clothing">🧶 의류 (스웨터/탑)</option>
-                <option value="bag">👜 가방/파우치</option>
-                <option value="hat">👒 모자/비니</option>
-                <option value="hands">🧤 장갑/핸드워머</option>
-                <option value="socks">🧦 양말/신발</option>
-                <option value="home">🏠 홈데코/인테리어</option>
-                <option value="pet">🐾 반려동물 용품</option>
+            </label>
+            <label>
+              만들고 싶은 것
+              <select name="category" defaultValue={s.category}>
+                {CATEGORIES.map(([id, label]) => (
+                  <option value={id} key={id}>
+                    {label}
+                  </option>
+                ))}
               </select>
-            </div>
-
-            {/* 가격/정렬 셀렉트 */}
-            <div className="lg:col-span-4 grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest ml-1">
-                  가격
-                </label>
-                <select
-                  name="free"
-                  defaultValue={freeFilter}
-                  className="w-full h-12 px-4 rounded-2xl border border-stone-100 bg-stone-50 text-sm font-bold text-stone-700 outline-none focus:ring-2 focus:ring-stone-200 shadow-sm cursor-pointer"
-                >
-                  <option value="">전체 도안</option>
-                  <option value="free">무료</option>
-                  <option value="online">유료</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest ml-1">
-                  정렬
-                </label>
-                <select
-                  name="sort"
-                  defaultValue={sortFilter}
-                  className="w-full h-12 px-4 rounded-2xl border border-stone-100 bg-stone-50 text-sm font-bold text-stone-700 outline-none focus:ring-2 focus:ring-stone-200 shadow-sm cursor-pointer"
-                >
-                  <option value="best">추천순</option>
-                  <option value="favorites">좋아요순</option>
-                  <option value="rating">별점순</option>
-                  <option value="difficulty">난이도순</option>
-                  <option value="popular">인기순</option>
-                  <option value="projects">작품순</option>
-                  <option value="recently-popular">최신유행</option>
-                  <option value="created_at">최신 등록순</option>
-                </select>
-              </div>
-            </div>
-
-            {/* 검색창 및 버튼 */}
-            <div className="lg:col-span-12 flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-                <Input
-                  name="query"
-                  defaultValue={currentQuery}
-                  placeholder="영문 검색 (예: Totoro, Bag)"
-                  className="h-12 pl-11 pr-4 border-stone-100 bg-stone-50 rounded-2xl focus:ring-stone-200 shadow-sm font-medium"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="h-12 bg-stone-900 hover:bg-stone-800 text-white rounded-2xl px-8 font-black transition-all shadow-md active:scale-95"
-              >
-                검색
-              </Button>
-            </div>
+            </label>
+            <label>
+              도안 받는 방법
+              <select name="free" defaultValue={s.availability}>
+                <option value="">전체</option>
+                <option value="free">무료 제공</option>
+                <option value="online">온라인 구매 가능</option>
+                <option value="ravelry">Ravelry 다운로드 제공</option>
+              </select>
+            </label>
+            <label>
+              도안 언어
+              <select name="language" defaultValue={s.language}>
+                <option value="">모든 언어</option>
+                <option value="kr">한국어 제공</option>
+                <option value="en">영어 제공</option>
+                <option value="ja">일본어 제공</option>
+              </select>
+            </label>
+            <label>
+              도안 형식
+              <select name="format" defaultValue={s.format}>
+                <option value="">전체 형식</option>
+                <option value="chart">차트 포함</option>
+                <option value="written-pattern">서술형</option>
+                <option value="video-tutorial">영상 포함</option>
+              </select>
+            </label>
+            <label>
+              난이도
+              <select name="difficulty" defaultValue={s.difficulty}>
+                <option value="">모든 난이도</option>
+                <option value="easy">쉬운 편 (평가 1–2)</option>
+              </select>
+            </label>
+            <label>
+              정렬
+              <select name="sort" defaultValue={s.sort}>
+                {SORTS.map(([id, label]) => (
+                  <option key={id} value={id}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </form>
-
-        <div className="flex justify-between items-center pt-4 border-t border-stone-50">
-          <p className="text-sm font-bold text-stone-500">
-            총 <span className="text-stone-900">{totalResults.toLocaleString()}</span>
-            개의 결과
+        <div className="quick-search">
+          <span>어디서 시작할까요?</span>
+          <Link href="/?craft=crochet&language=kr">
+            한국어로 읽는 도안 <ArrowUpRight size={13} />
+          </Link>
+          <Link href="/?craft=crochet&free=free&format=chart">
+            차트가 있는 무료 도안 <ArrowUpRight size={13} />
+          </Link>
+          <Link href="/?craft=knitting&category=clothing&sort=projects">
+            많이 뜬 대바늘 의류 <ArrowUpRight size={13} />
+          </Link>
+        </div>
+        {params.query && (
+          <p className="search-interpretation">
+            검색에 반영한 조건: {s.craft === "crochet" ? "코바늘" : "대바늘"}
+            {s.category && ` · ${CATEGORIES.find(([id]) => id === s.category)?.[1]}`}
+            {s.difficulty && " · 쉬운 편"}
+            {s.availability === "free" && " · 무료"}
+            {s.query && ` · “${s.query}”`}
+            <span>한국어 일부 용어를 검색 조건으로 바꿨어요. 위에서 조정할 수 있어요.</span>
           </p>
-          <Badge
-            variant="outline"
-            className="rounded-full border-stone-200 text-stone-400 px-3 py-1 font-bold"
-          >
-            Page {currentPage} of {totalPages}
-          </Badge>
-        </div>
-      </div>
-      {/* [NEW] 2.5 중단 배너 광고 섹션 - 300x250 최적화 */}
-      <div className="w-full flex justify-center py-2">
-        <div className="w-[300px] h-[250px] bg-white border border-stone-200 flex flex-col items-center justify-center shadow-sm relative group">
-          {/* 광고 라벨 (애드핏 정책상 있으면 좋음) */}
-          <span className="absolute top-2 right-3 text-[9px] text-stone-300 font-bold tracking-widest uppercase">
-            ADVERTISEMENT
-          </span>
-
-          <div className="w-full h-full flex items-center justify-center text-[11px] text-stone-400 font-bold bg-stone-50/50">
-            {/* 여기에 카카오 애드핏 300x250 스크립트 삽입 */}
-            <AdFit unit="DAN-kS3c01Bcu5rrcqvI" width="300" height="250" />
+        )}
+      </section>
+      <section id="results" className="results-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">THE PATTERN INDEX</p>
+            <h2>
+              {active ? "찾고 있던 도안" : "오래 사랑받는 도안"}
+              <span>
+                {data
+                  ? `${data.paginator.results.toLocaleString("ko-KR")}${data.paginator.results >= 100000 ? "+" : ""}`
+                  : ""}
+              </span>
+            </h2>
           </div>
+          {active ? (
+            <Link className="text-link" href="/">
+              조건 초기화 <SlidersHorizontal size={15} />
+            </Link>
+          ) : (
+            <p className="section-note">완성작이 많은 순서로 모았어요.</p>
+          )}
         </div>
-      </div>
-      {/* 3. 도안 그리드: 카드 디자인 정교화 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        {patterns.map((pattern: any) => (
-          <Card
-            key={pattern.id}
-            className="group border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[2.5rem] overflow-hidden bg-white ring-1 ring-stone-100"
-          >
-            <div className="aspect-square relative overflow-hidden">
-              <img
-                src={pattern.first_photo?.medium_url || "/api/placeholder/400/400"}
-                alt={pattern.name}
-                className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
-              />
-              <Badge
-                className={`absolute top-6 right-6 shadow-lg px-4 py-1.5 rounded-full font-black border-none ${pattern.free ? "bg-green-600 text-white" : "bg-blue-600 text-white"}`}
-              >
-                {pattern.free ? "무료" : "유료"}
-              </Badge>
+        {data?.detailsUnavailable && (
+          <p className="notice">
+            일부 상세 정보를 가져오지 못했어요. 언어·준비물은 도안 상세에서 다시 확인해 주세요.
+          </p>
+        )}
+        {!data ? (
+          <div className="empty-state">
+            <h3>잠시 도안을 불러오지 못했어요.</h3>
+            <p>검색 조건은 그대로 남아 있어요. 잠시 후 다시 시도해 주세요.</p>
+            <a className="primary-button" href={returnTo}>
+              다시 불러오기 <ArrowRight size={16} />
+            </a>
+          </div>
+        ) : !patterns.length ? (
+          <div className="empty-state">
+            <Search size={28} />
+            <h3>이 조건에 맞는 도안이 없어요.</h3>
+            <p>조건을 조금 줄이거나 다른 이름으로 찾아보세요.</p>
+            <Link href="/" className="primary-button">
+              전체 도안 보기
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="pattern-grid">
+              {patterns.map((p, i) => (
+                <PatternCard key={p.id} pattern={p} returnTo={returnTo} index={i} />
+              ))}
             </div>
-            <CardHeader className="p-7 pb-3 space-y-1">
-              <CardTitle className="text-xl font-black line-clamp-1 text-stone-800 tracking-tight leading-tight">
-                {pattern.name}
-              </CardTitle>
-              <p className="text-sm text-stone-400 font-bold tracking-tight italic">
-                by {pattern.designer?.name || "Unknown"}
-              </p>
-            </CardHeader>
-            <CardContent className="p-7 pt-0">
-              <div className="flex justify-between items-center pt-5 border-t border-stone-50">
-                <span className="text-[10px] font-black text-stone-300 uppercase tracking-widest truncate max-w-[130px]">
-                  {pattern.pattern_sources?.[0]?.name || "Ravelry"}
+            <nav aria-label="검색 결과 페이지" className="pagination">
+              {s.page > 1 ? (
+                <Link href={pageUrl(s.page - 1)} aria-label="이전 페이지">
+                  <ChevronLeft size={18} />
+                </Link>
+              ) : (
+                <span className="disabled">
+                  <ChevronLeft size={18} />
                 </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl border-stone-200 text-stone-800 font-bold hover:bg-stone-900 hover:text-white transition-all px-5 h-9"
-                  asChild
-                >
-                  <Link href={`/pattern/${pattern.id}`}>상세보기</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      {/* 4. 페이지네이션: 버튼 크기 및 폰트 조정 */}
-      <div className="flex flex-col items-center gap-6 py-16">
-        <div className="flex justify-center items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            disabled={currentPage <= 1}
-            asChild={currentPage > 1}
-            className="rounded-full w-12 h-12 border-stone-200 hover:bg-stone-50"
-          >
-            <Link href={getPageUrl(currentPage - 1)}>
-              <ChevronLeft className="h-5 w-5 text-stone-600" />
-            </Link>
-          </Button>
-          <div className="flex items-center gap-1.5">
-            {pageNumbers.map((pageNum) => (
-              <Button
-                key={pageNum}
-                variant={pageNum === currentPage ? "default" : "ghost"}
-                size="sm"
-                className={`w-12 h-12 rounded-full font-black text-base transition-all ${pageNum === currentPage ? "bg-stone-900 text-white shadow-lg scale-110" : "text-stone-400 hover:bg-stone-100"}`}
-                asChild
-              >
-                <Link href={getPageUrl(pageNum)}>{pageNum}</Link>
-              </Button>
-            ))}
-          </div>
-          <Button
-            variant="outline"
-            size="icon"
-            disabled={currentPage >= totalPages}
-            asChild={currentPage < totalPages}
-            className="rounded-full w-12 h-12 border-stone-200 hover:bg-stone-50"
-          >
-            <Link href={getPageUrl(currentPage + 1)}>
-              <ChevronRight className="h-5 w-5 text-stone-600" />
-            </Link>
-          </Button>
+              )}
+              {Array.from(
+                { length: Math.min(5, totalPages) },
+                (_, i) => Math.max(1, Math.min(s.page - 2, totalPages - 4)) + i,
+              ).map((n) => (
+                <Link key={n} href={pageUrl(n)} aria-current={n === s.page ? "page" : undefined}>
+                  {n}
+                </Link>
+              ))}
+              {s.page < Math.min(1000, totalPages) ? (
+                <Link href={pageUrl(s.page + 1)} aria-label="다음 페이지">
+                  <ChevronRight size={18} />
+                </Link>
+              ) : (
+                <span className="disabled">
+                  <ChevronRight size={18} />
+                </span>
+              )}
+            </nav>
+          </>
+        )}
+      </section>
+      <aside className="guide-banner">
+        <div>
+          <p className="eyebrow">BEFORE YOUR FIRST STITCH</p>
+          <h2>영문 도안, 천천히 읽어도 괜찮아요.</h2>
+          <p>실 굵기부터 게이지, 코바늘 약어까지. 시작에 필요한 말을 풀어두었어요.</p>
         </div>
-      </div>
+        <Link href="/guide" className="secondary-button">
+          뜨개 길잡이 <ArrowUpRight size={17} />
+        </Link>
+      </aside>
+      <Suspense fallback={null}>
+        <HotPatterns craft={s.craft} />
+      </Suspense>
     </div>
   );
 }

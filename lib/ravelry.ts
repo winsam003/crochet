@@ -1,120 +1,96 @@
-// lib/ravelry.ts
-export async function getPatterns(
-  query: string = "",
-  page: number = 1,
-  free: string = "",
-  pc: string = "",
-  sort: string = "", // 정렬 파라미터 추가
-  craft: string = "crochet",
-) {
-  const auth = Buffer.from(
-    `${process.env.RAVELRY_USER_ID}:${process.env.RAVELRY_API_KEY}`,
-  ).toString("base64");
-
-  const params = new URLSearchParams({
-    query: query,
-    page: page.toString(),
-    page_size: "9",
-    craft: craft,
+import "server-only";
+import { cache } from "react";
+import { interpretSearch, type Pattern, type SearchParams } from "./patterns";
+export interface SearchResult {
+  patterns: Pattern[];
+  paginator: { page_count: number; results: number; page: number };
+  detailsUnavailable?: boolean;
+}
+async function request<T>(path: string, revalidate = 3600): Promise<T> {
+  const user = process.env.RAVELRY_USER_ID,
+    key = process.env.RAVELRY_API_KEY;
+  if (!user || !key) throw new Error("Ravelry credentials missing");
+  const res = await fetch(`https://api.ravelry.com/${path}`, {
+    headers: { Authorization: `Basic ${Buffer.from(`${user}:${key}`).toString("base64")}` },
+    next: { revalidate },
+    signal: AbortSignal.timeout(15000),
   });
-
-  if (free) params.append("availability", free);
-  if (pc) params.append("pc", pc);
-
-  // 정렬 옵션 추가 (기본값은 'best'나 'projects')
-  if (sort) {
-    params.append("sort", sort);
-  } else {
-    params.append("sort", "best"); // 기본값: 추천순
-  }
-
-  const url = `https://api.ravelry.com/patterns/search.json?${params.toString()}`;
-
-  const res = await fetch(url, {
-    headers: { Authorization: `Basic ${auth}` },
-    next: { revalidate: 3600 },
-  });
-
-  if (!res.ok) throw new Error("API 호출 실패");
+  if (!res.ok) throw new Error(`Ravelry HTTP ${res.status}`);
   return res.json();
 }
-
-export async function getPatternDetail(id: string) {
-  const auth = Buffer.from(
-    `${process.env.RAVELRY_USER_ID}:${process.env.RAVELRY_API_KEY}`,
-  ).toString("base64");
-
-  const res = await fetch(`https://api.ravelry.com/patterns/${id}.json`, {
-    headers: {
-      Authorization: `Basic ${auth}`,
-    },
-    next: { revalidate: 3600 }, // 1시간 캐싱
-  });
-
-  if (!res.ok) {
-    throw new Error("상세 데이터를 가져오는데 실패했습니다.");
-  }
-
-  const data = await res.json();
-  // 라벨리 상세 API는 응답이 { pattern: { ... } } 구조로 옵니다.
-  return data.pattern;
-}
-
-export async function getRelatedPatterns(category: string, craft: string, weight: string) {
+async function hydrate(data: SearchResult): Promise<SearchResult> {
+  if (!data.patterns.length) return data;
   try {
-    const auth = Buffer.from(
-      `${process.env.RAVELRY_USER_ID}:${process.env.RAVELRY_API_KEY}`,
-    ).toString("base64");
-
-    const response = await fetch(
-      `https://api.ravelry.com/patterns/search.json?pc=${category}&craft=${craft}&weight=${weight}&page_size=10&sort=best&photo=yes`,
-      {
-        headers: {
-          Authorization: `Basic ${auth}`,
-        },
-        // 캐시 설정 (성능 최적화)
-        next: { revalidate: 3600 },
-      },
+    // The API expects space-separated IDs. URLSearchParams encodes spaces as +.
+    const ids = data.patterns.map((p) => p.id).join(" ");
+    const details = await request<{ patterns: Record<string, Pattern> }>(
+      `patterns.json?${new URLSearchParams({ ids })}`,
     );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Ravelry API Error Text:", errorText);
-      return []; // 에러 시 빈 배열 반환해서 페이지 중단 방지
-    }
-
-    const data = await response.json();
-    return data.patterns || [];
-  } catch (error) {
-    console.error("fetch error:", error);
-    return []; // 네트워크 에러 시 빈 배열 반환
+    return {
+      ...data,
+      detailsUnavailable: data.patterns.some((p) => !details.patterns[String(p.id)]),
+      patterns: data.patterns.map((p) => ({ ...p, ...details.patterns[String(p.id)] })),
+    };
+  } catch {
+    return { ...data, detailsUnavailable: true };
   }
 }
-// lib/ravelry.ts
-
-export async function getHotPatterns(category: string = "", craft: string = "crochet") {
-  const auth = Buffer.from(
-    `${process.env.RAVELRY_USER_ID}:${process.env.RAVELRY_API_KEY}`,
-  ).toString("base64");
-
-  // sort=recently-popular 를 쓰면 투박함을 줄이고 최신 트렌드를 가져옵니다.
+export async function getPatterns(input: SearchParams = {}): Promise<SearchResult> {
+  const s = interpretSearch(input);
   const params = new URLSearchParams({
-    sort: "recently-popular",
-    page_size: "10",
+    query: s.query,
+    page: String(s.page),
+    page_size: "12",
+    craft: s.craft,
+    sort: s.sort,
     photo: "yes",
-    craft: craft, // 코바늘/대바늘 구분
   });
-
-  if (category) params.append("pc", category);
-
-  const url = `https://api.ravelry.com/patterns/search.json?${params.toString()}`;
-
-  const res = await fetch(url, {
-    headers: { Authorization: `Basic ${auth}` },
-    next: { revalidate: 600 },
-  });
-
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.patterns || [];
+  if (s.availability) params.set("availability", s.availability);
+  if (s.category) params.set("pc", s.category);
+  if (s.language) params.set("language", s.language);
+  if (s.format) params.set("pa", s.format);
+  if (s.difficulty) params.set("difficulties", "1|2");
+  return hydrate(await request<SearchResult>(`patterns/search.json?${params}`));
+}
+export const getPatternDetail = cache(async (id: string): Promise<Pattern | null> => {
+  if (!/^\d+$/.test(id)) return null;
+  try {
+    return (await request<{ pattern: Pattern }>(`patterns/${id}.json`)).pattern;
+  } catch (e) {
+    if (e instanceof Error && e.message === "Ravelry HTTP 404") return null;
+    throw e;
+  }
+});
+export async function getRelatedPatterns(
+  category: string,
+  craft: string,
+  excludeId: number,
+): Promise<Pattern[]> {
+  try {
+    const params = new URLSearchParams({
+      pc: category,
+      craft,
+      page_size: "5",
+      sort: "projects",
+      photo: "yes",
+    });
+    const data = await request<SearchResult>(`patterns/search.json?${params}`);
+    return data.patterns.filter((p) => p.id !== excludeId).slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+export async function getHotPatterns(category = "", craft = "crochet"): Promise<Pattern[]> {
+  try {
+    const params = new URLSearchParams({
+      pc: category,
+      craft,
+      page_size: "4",
+      sort: "recently-popular",
+      photo: "yes",
+    });
+    return (await request<SearchResult>(`patterns/search.json?${params}`, 600)).patterns;
+  } catch {
+    return [];
+  }
 }

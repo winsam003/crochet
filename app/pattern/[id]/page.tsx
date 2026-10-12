@@ -1,219 +1,273 @@
-import { getPatternDetail } from "@/lib/ravelry";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, Scissors, Ruler, Star, Heart, Languages } from "lucide-react";
 import Link from "next/link";
-import AdFit from "@/lib/Adfit";
+import { Suspense } from "react";
+import { notFound } from "next/navigation";
+import { ArrowLeft, ArrowUpRight, ExternalLink, BookOpen } from "lucide-react";
+import { getPatternDetail } from "@/lib/ravelry";
+import {
+  acquisition,
+  difficultyLabel,
+  formatLabels,
+  languageLabel,
+  meterage,
+  priceLabel,
+  savedPattern,
+  safeReturn,
+  safeUrl,
+} from "@/lib/patterns";
+import { translateYarnWeight } from "@/lib/utils";
+import { SaveButton, RecentTracker, AcquiredButton } from "@/components/Library";
+import PatternImage from "@/components/PatternImage";
 import RelatedPatterns from "@/components/RelatedPatterns";
-import { translateYarnWeight, translateNeedleSize } from "@/lib/utils";
-import HotPatterns from "@/components/HotPatterns";
-
-export default async function PatternDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PatternDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   const { id } = await params;
-  const pattern = await getPatternDetail(id);
-
-  // API 응답 구조에 맞게 데이터 추출 (Ravelry 상세 API 기준)
-  const category = pattern.pattern_categories?.[0]?.permalink || "";
-  const craft = pattern.craft?.permalink || "crochet";
-  const weight = pattern.yarn_weight?.slug || "";
-
+  const back = safeReturn((await searchParams).from);
+  const p = await getPatternDetail(id);
+  if (!p) notFound();
+  const access = acquisition(p),
+    formats = formatLabels(p),
+    saved = savedPattern(p),
+    photos = p.photos || [];
+  const needles = [...new Set(p.pattern_needle_sizes?.map((n) => n.metric) || [])];
+  const craft = p.craft?.permalink || "crochet";
+  const yarns = [
+    ...new Set(
+      (p.packs || [])
+        .map((pack) =>
+          [pack.yarn?.yarn_company_name, pack.yarn?.name || pack.yarn_name]
+            .filter(Boolean)
+            .join(" "),
+        )
+        .filter(Boolean),
+    ),
+  ];
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8 bg-stone-50/50 min-h-screen">
-      {/* 상단 뒤로가기 */}
-      <Button variant="ghost" asChild className="hover:bg-stone-200">
-        <Link href="/">
-          <ChevronLeft className="mr-2 h-4 w-4" /> 도안 목록으로 돌아가기
-        </Link>
-      </Button>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* 왼쪽: 이미지 갤러리 */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-            <img
-              src={pattern.photos[0]?.medium2_url}
-              alt={pattern.name}
-              className="w-full h-auto object-cover"
+    <div className="page-shell detail-page">
+      <RecentTracker pattern={saved} />
+      <Link className="back-link" href={back}>
+        <ArrowLeft size={16} />
+        {back === "/saved" ? "내 도안함" : "검색 결과로 돌아가기"}
+      </Link>
+      <div className="detail-grid">
+        <section className="detail-gallery" aria-label="도안 사진">
+          <div className="detail-photo">
+            <PatternImage
+              src={photos[0]?.medium2_url || photos[0]?.medium_url}
+              alt={p.name}
+              eager
             />
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {pattern.photos.slice(1, 4).map((photo: any) => (
-              <div
-                key={photo.id}
-                className="rounded-xl overflow-hidden border-2 border-white shadow-sm aspect-square"
-              >
-                <img src={photo.small_url} alt="sub" className="w-full h-full object-cover" />
-              </div>
-            ))}
+          {photos[0]?.copyright_holder && (
+            <p className="photo-credit">사진 © {photos[0].copyright_holder}</p>
+          )}
+          {photos.length > 1 && (
+            <div className="gallery-thumbnails">
+              {photos.slice(1, 7).map((photo, i) => (
+                <a
+                  key={photo.id || i}
+                  href={safeUrl(photo.medium2_url || photo.medium_url)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${p.name} 추가 사진 ${i + 1} 새 창에서 크게 보기`}
+                >
+                  <PatternImage
+                    src={photo.medium_url || photo.small_url}
+                    alt={`${p.name} 다른 모습 ${i + 1}`}
+                  />
+                </a>
+              ))}
+            </div>
+          )}
+        </section>
+        <section className="detail-overview">
+          <p className="eyebrow accent">
+            {craft === "crochet" ? "CROCHET / 코바늘" : "KNITTING / 대바늘"}
+          </p>
+          <h1>{p.name}</h1>
+          <p className="designer">designed by {p.pattern_author?.name || "작가 미등록"}</p>
+          <div className="detail-tags">
+            <span>{languageLabel(p)}</span>
+            {formats.length ? (
+              formats.map((f) => <span key={f}>{f}</span>)
+            ) : (
+              <span>도안 형식 미확인</span>
+            )}
           </div>
-        </div>
-
-        {/* 오른쪽: 상세 정보 */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Badge className="bg-stone-800 uppercase tracking-widest text-[10px]">
-                {/* 도안 타입 한글화: Toys -> 인형/소품 등 */}
-                {pattern.pattern_type.name === "Toys" ? "인형/소품" : pattern.pattern_type.name}
-              </Badge>
-              {pattern.free ? (
-                <Badge className="bg-green-600">무료 도안</Badge>
-              ) : (
-                <Badge className="bg-blue-600">유료 도안</Badge>
+          <div className="overview-stats">
+            <div>
+              <span>뜨는 난이도</span>
+              <strong>{difficultyLabel(p)}</strong>
+              {!!p.difficulty_count && (
+                <small>{p.difficulty_count.toLocaleString("ko-KR")}명의 평가</small>
               )}
             </div>
-            <h1 className="text-4xl font-black text-stone-900 leading-tight">{pattern.name}</h1>
-            <p className="text-stone-500 font-medium">
-              디자이너:{" "}
-              <span className="text-stone-800 border-b border-stone-300">
-                {pattern.pattern_author.name}
-              </span>
-            </p>
-          </div>
-
-          {/* 핵심 스펙 카드 (한글 레이블) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center space-y-1">
-              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-              <span className="text-xs text-stone-400 font-bold uppercase">난이도</span>
-              <span className="text-lg font-black text-stone-800">
-                {pattern.difficulty_average?.toFixed(1) || "N/A"}
-              </span>
-            </div>
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center space-y-1">
-              <Ruler className="w-4 h-4 text-stone-400" />
-              <span className="text-xs text-stone-400 font-bold uppercase">바늘 크기</span>
-              <span className="text-lg font-black text-stone-800">
-                {pattern.pattern_needle_sizes?.length > 0 ? (
-                  <>
-                    <div className="flex flex-col justify-center items-center">
-                      {pattern.pattern_needle_sizes[0].metric}mm
-                      <div className="text-sm ml-1 font-medium text-stone-500">
-                        {/* craft 변수를 사용하여 코바늘/대바늘 호수 출력 */}
-                        {translateNeedleSize(pattern.pattern_needle_sizes[0].metric, craft)}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  "정보 없음"
-                )}
-              </span>
-            </div>
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center space-y-1">
-              <Scissors className="w-4 h-4 text-stone-400" />
-              <span className="text-xs text-stone-400 font-bold uppercase">실 굵기</span>
-              <span className="text-[13px] font-black text-stone-800 text-center leading-tight">
-                {/* 원문(Bulky) 대신 한국식 설명(매우 굵은 실)을 보여줍니다 */}
-                {translateYarnWeight(pattern.yarn_weight_description)}
-                <br />
-                <span className="text-[10px] text-stone-400 font-normal">
-                  ({pattern.yarn_weight_description})
-                </span>
-              </span>
-            </div>
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center space-y-1">
-              <Heart className="w-4 h-4 text-pink-400 fill-pink-400" />
-              <span className="text-xs text-stone-400 font-bold uppercase">좋아요</span>
-              <span className="text-lg font-black text-stone-800">{pattern.favorites_count}</span>
+            <div>
+              <span>다른 사람의 완성작</span>
+              <a href={`${access.original}/people`} target="_blank" rel="noopener noreferrer">
+                <strong>
+                  {p.projects_count?.toLocaleString("ko-KR") ?? "—"}개 <ArrowUpRight size={15} />
+                </strong>
+              </a>
+              <small>Ravelry에서 살펴보기</small>
             </div>
           </div>
-          {/* [NEW] 2.5 중단 배너 광고 섹션 - 300x250 최적화 */}
-          <div className="w-full flex justify-center py-2">
-            <div className="w-[300px] h-[250px] bg-white border border-stone-200 flex flex-col items-center justify-center shadow-sm relative group">
-              {/* 광고 라벨 (애드핏 정책상 있으면 좋음) */}
-              <span className="absolute top-2 right-3 text-[9px] text-stone-300 font-bold tracking-widest uppercase">
-                ADVERTISEMENT
-              </span>
-
-              <div className="w-full h-full flex items-center justify-center text-[11px] text-stone-400 font-bold bg-stone-50/50">
-                {/* 여기에 카카오 애드핏 300x250 스크립트 삽입 */}
-                <AdFit unit="DAN-kS3c01Bcu5rrcqvI" width="300" height="250" />
-              </div>
-            </div>
-          </div>
-          {/* 도안 설명 섹션 */}
-          <Card className="rounded-3xl border-none shadow-xl overflow-hidden">
-            <div className="bg-stone-900 p-4 text-white flex justify-between items-center">
-              <span className="font-bold flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-                도안 상세 설명
-              </span>
-
-              {/* 구글 번역기 버튼 추가 */}
-              {pattern.notes && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="bg-white/10 hover:bg-white/20 border-white/20 text-white text-[11px] h-7"
-                >
-                  <a
-                    href={`https://translate.google.com/?sl=en&tl=ko&text=${encodeURIComponent(
-                      pattern.notes,
-                    )}&op=translate`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Languages className="mr-1.5 h-3 w-3" /> 구글번역기로 번역하기
-                  </a>
-                </Button>
-              )}
-            </div>
-            <CardContent className="p-8 space-y-6">
-              <div className="space-y-4">
-                <div className="bg-stone-50 p-6 rounded-2xl text-stone-600 text-sm leading-relaxed whitespace-pre-wrap border border-stone-100">
-                  {pattern.notes || "등록된 설명이 없습니다."}
-                </div>
-              </div>
-
-              {/* 상황별 다운로드/안내 버튼 */}
-              {pattern.free ? (
-                <Button
-                  asChild
-                  className="w-full py-8 rounded-2xl bg-green-600 hover:bg-green-700 text-white text-xl font-bold shadow-lg transition-all hover:-translate-y-1"
-                >
-                  <a
-                    href={pattern.download_location?.url || pattern.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    🪄 도안 확인하기
-                  </a>
-                </Button>
-              ) : (
-                <Button
-                  disabled
-                  className="w-full py-8 rounded-2xl bg-stone-200 text-stone-500 text-xl font-bold shadow-none"
-                >
-                  🔒 유료 도안입니다 (구매 필요)
-                </Button>
-              )}
-
-              <p className="text-center text-xs text-stone-400 leading-relaxed">
-                {pattern.free ? (
-                  <>
-                    * 버튼을 누르면 Ravelry 다운로드 페이지로 이동합니다.
-                    <br />
-                    <span className="text-amber-600 font-medium">
-                      (주의: 디자이너의 설정에 따라 무료 기간이 종료되어 유료로 전환되었을 수 있으니
-                      이동 후 무료 여부를 꼭 확인하세요!)
-                    </span>
-                  </>
-                ) : (
-                  "* 이 도안은 유료이므로 Ravelry에서 별도 구매가 필요합니다."
-                )}
+          <div className="acquisition-box">
+            <p className="eyebrow">GET THE PATTERN</p>
+            <h2>{access.label}</h2>
+            {priceLabel(p) && (
+              <p className="price-line">
+                등록 가격 {priceLabel(p)} <span>최종 가격은 제공처에서 확인하세요.</span>
               </p>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+            <div className="access-links">
+              {access.links.map((link, i) => (
+                <a
+                  key={`${link.url}-${i}`}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={i === 0 ? "primary-button" : "secondary-button"}
+                >
+                  {link.label}
+                  <ArrowUpRight size={17} />
+                </a>
+              ))}
+              <a
+                className={access.links.length ? "text-link" : "primary-button"}
+                href={access.original}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ravelry 원문·제공처 확인 <ExternalLink size={14} />
+              </a>
+            </div>
+            <p className="access-note">
+              외부 제공처로 이동합니다. 도안 언어와 무료 제공 범위, 다운로드 조건을 확인해 주세요.
+            </p>
+            <div className="save-actions">
+              <SaveButton pattern={saved} />
+              <AcquiredButton id={p.id} />
+            </div>
+          </div>
+        </section>
       </div>
-      {/* --- 연관 도안 섹션 추가 --- */}
-      <hr className="border-stone-200 mt-12" />
-      <RelatedPatterns category={category} craft={craft} weight={weight} />
+      <div className="detail-content">
+        <section className="materials">
+          <p className="eyebrow">BEFORE YOU BEGIN</p>
+          <h2>시작하기 전에 준비해요.</h2>
+          <p className="section-note">
+            도안에 등록된 정보를 모았어요. 사이즈별 준비물은 원문에서 확인해 주세요.
+          </p>
+          <dl className="material-list">
+            <div>
+              <dt>바늘 크기</dt>
+              <dd>
+                {needles.length ? `${needles.join(" / ")} mm` : "미등록"}
+                <small>호수는 제품마다 다를 수 있어 mm를 기준으로 확인하세요.</small>
+              </dd>
+            </div>
+            <div>
+              <dt>실 굵기</dt>
+              <dd>{translateYarnWeight(p.yarn_weight?.name || p.yarn_weight_description)}</dd>
+            </div>
+            <div>
+              <dt>권장 실</dt>
+              <dd>{yarns.length ? yarns.join(" / ") : "미등록"}</dd>
+            </div>
+            <div>
+              <dt>필요한 실 길이</dt>
+              <dd>
+                {meterage(p)}
+                {p.yardage && (
+                  <small>사이즈별 소요량이 다를 수 있어요. 중량(g)으로 바로 바꾸지는 마세요.</small>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>게이지</dt>
+              <dd>
+                {p.gauge
+                  ? `${p.gauge}코${p.row_gauge ? ` × ${p.row_gauge}단` : ""} / ${Math.round((p.gauge_divisor || 4) * 2.54 * 10) / 10} cm`
+                  : "미등록"}
+                {p.gauge_pattern && <small>{p.gauge_pattern}</small>}
+              </dd>
+            </div>
+            <div>
+              <dt>제공 사이즈</dt>
+              <dd>
+                {p.sizes_available || "미등록"}
+                <small>원문 표기입니다. 완성 치수와 여유분을 확인하세요.</small>
+              </dd>
+            </div>
+          </dl>
+          <Link href="/guide" className="text-link">
+            <BookOpen size={16} />실 굵기와 게이지가 낯설다면 <ArrowUpRight size={15} />
+          </Link>
+        </section>
+        <section className="pattern-notes">
+          <p className="eyebrow">DESIGNER’S NOTES</p>
+          <h2>작가의 도안 소개</h2>
+          <p className="section-note">소개글이며, 실제 도안 파일의 전체 내용과는 다를 수 있어요.</p>
+          {p.notes ? (
+            <>
+              <div className="notes-text">{p.notes}</div>
+              <a
+                className="secondary-button"
+                href={`https://translate.google.com/?sl=auto&tl=ko&text=${encodeURIComponent(p.notes.slice(0, 4500))}&op=translate`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                소개글 한국어로 번역하기 <ArrowUpRight size={16} />
+              </a>
+              {p.notes.length > 4500 && (
+                <p className="section-note">긴 소개글은 앞부분 4,500자만 번역기로 전달합니다.</p>
+              )}
+            </>
+          ) : (
+            <p className="notice">등록된 소개글이 없어요. 원문 제공처에서 확인해 주세요.</p>
+          )}
+          {craft === "crochet" && (
+            <div className="terminology-note">
+              <h3>코바늘 약어, 어떤 기준인가요?</h3>
+              <p>
+                {p.has_us_terminology && p.has_uk_terminology
+                  ? "미국식·영국식 표기가 모두 등록되어 있어요. 받은 파일의 기준을 확인하세요."
+                  : p.has_us_terminology
+                    ? "미국식(US) 약어가 등록된 도안이에요."
+                    : p.has_uk_terminology
+                      ? "영국식(UK) 약어가 등록된 도안이에요."
+                      : "약어 기준이 등록되어 있지 않아요. 원문에서 US / UK 표기를 확인하세요."}
+              </p>
+              <Link className="text-link" href="/guide#terms">
+                약어 읽는 법 <ArrowUpRight size={14} />
+              </Link>
+            </div>
+          )}
+          {!!p.printings?.length && (
+            <div className="source-list">
+              <h3>도안이 실린 곳</h3>
+              {p.printings.map((printing, i) => (
+                <p key={i}>
+                  {printing.pattern_source.name}
+                  {printing.pattern_not_available && " · 현재 제공 여부 확인 필요"}
+                </p>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+      <Suspense fallback={null}>
+        <RelatedPatterns
+          category={p.pattern_categories?.[0]?.permalink || ""}
+          craft={craft}
+          id={p.id}
+        />
+      </Suspense>
     </div>
   );
 }

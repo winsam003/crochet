@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WinSam Crochet
 
-## Getting Started
+한국 사용자를 위한 Ravelry 도안 탐색 서비스. Next.js 16 / React 19 / TypeScript.
 
-First, run the development server:
+## 실행
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Node.js 24 이상(내장 TypeScript 지원 테스트 기준), pnpm을 사용합니다.
+
+```sh
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`.env.local`에 Ravelry 읽기 API 인증 정보를 설정하세요. 이 파일은 커밋하지 않습니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```dotenv
+RAVELRY_USER_ID=your-api-user
+RAVELRY_API_KEY=your-api-key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```sh
+pnpm dev
+pnpm build
+pnpm test
+pnpm check:api
+```
 
-## Learn More
+`check:api`는 실제 Ravelry에 읽기 요청을 보내므로 네트워크와 인증 정보가 필요합니다. 기본 단위 테스트는 네트워크를 사용하지 않습니다.
 
-To learn more about Next.js, take a look at the following resources:
+## 화면
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/`: 한국어 용어 검색, 공예·카테고리·언어·도안 형식·난이도·제공 방식 필터.
+- `/pattern/[id]`: 준비물, 언어·형식, 무료/구매 경로, 원문 소개와 번역기 연결, 완성작 원문 링크.
+- `/saved`: 로그인 없이 브라우저에 저장하는 찜·최근 본 도안.
+- `/guide`: 실·바늘·게이지·US/UK 코바늘 약어 길잡이.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 데이터 처리
 
-## Deploy on Vercel
+- API 인증은 `server-only` 모듈에서만 사용합니다.
+- 검색 12건을 가져온 뒤 상세 정보를 일괄 조회합니다. 개별 카드마다 요청하지 않습니다.
+- 검색·상세 캐시는 1시간, 인기 목록은 10분입니다. 요청 제한 시간은 15초입니다.
+- Ravelry 한국어 언어 코드는 `kr`입니다. `ko`는 실제 API에서 실패합니다.
+- 낮은 난이도 필터는 `difficulties=1|2`입니다. `difficulty`는 필터로 작동하지 않았습니다.
+- 일괄 상세 조회의 `ids`는 공백으로 구분한 뒤 URL 인코딩해야 합니다. 리터럴 `+`를 `%2B`로 인코딩하면 일부만 반환될 수 있습니다.
+- `free=true`여도 `download_location.free=false`일 수 있습니다. 무료 웹 제공과 유료 파일 구매를 구분하고, 이 경우 무료 안내 링크를 먼저 보여줍니다.
+- 등록되지 않은 언어·바늘·난이도를 추정하지 않습니다. 난이도 평가는 작가의 등급과 별개입니다.
+- 한국어 검색은 용어 사전 기반입니다. 임의의 문장을 완전히 번역하는 기능은 아닙니다.
+- 설명 번역은 외부 Google Translate 연결입니다. 도안 파일 전체 번역·국내 실 자동 추천은 제공하지 않습니다.
+- 찜·최근 본 기록·도안 확보 표시는 이 브라우저의 localStorage에만 저장됩니다. 외부 다운로드 완료 여부를 자동 추적하지 않습니다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 확인 사항
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+단위 테스트는 한국어 검색 해석, 무료 웹/유료 파일 혼합 사례, 누락 링크, 안전한 URL, 길이 변환과 한국어 언어 코드를 확인합니다. 실제 API 검증 스크립트는 한국어·차트·난이도·무료 필터와 다건 상세 응답을 확인합니다.
+
+브라우저로 데스크톱·모바일 화면과 저장/취소·최근 본 도안·검색 복귀 동작을 확인한 뒤 배포하세요. 이번 작업 환경에서는 컴퓨터 제어 권한이 없어 시각 검수를 수행하지 못했습니다.

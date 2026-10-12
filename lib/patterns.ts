@@ -1,0 +1,272 @@
+export interface Photo {
+  id?: number;
+  medium_url?: string;
+  medium2_url?: string;
+  small_url?: string;
+  copyright_holder?: string;
+}
+export interface Source {
+  name?: string;
+  url?: string;
+  pattern_source_type?: { name?: string };
+}
+export interface Pattern {
+  id: number;
+  name: string;
+  permalink?: string;
+  free?: boolean;
+  designer?: { name?: string };
+  pattern_author?: { name?: string };
+  first_photo?: Photo;
+  photos?: Photo[];
+  pattern_sources?: Source[];
+  languages?: { code: string; name: string }[];
+  pattern_attributes?: { permalink: string }[];
+  pattern_categories?: { permalink: string; name?: string }[];
+  craft?: { permalink: string };
+  yarn_weight?: { name?: string; id?: number };
+  yarn_weight_description?: string | null;
+  pattern_needle_sizes?: { metric: number }[];
+  difficulty_average?: number;
+  difficulty_count?: number | null;
+  rating_average?: number;
+  rating_count?: number | null;
+  projects_count?: number;
+  favorites_count?: number;
+  notes?: string;
+  url?: string | null;
+  download_location?: { type?: string; free?: boolean; url?: string } | null;
+  ravelry_download?: boolean;
+  downloadable?: boolean;
+  price?: number | string | null;
+  currency?: string | null;
+  yardage?: number | null;
+  yardage_max?: number | null;
+  gauge?: number | null;
+  row_gauge?: number | null;
+  gauge_divisor?: number;
+  gauge_pattern?: string;
+  sizes_available?: string;
+  has_us_terminology?: boolean;
+  has_uk_terminology?: boolean;
+  printings?: { pattern_not_available?: boolean; pattern_source: Source }[];
+  packs?: {
+    yarn_name?: string;
+    yarn?: { name?: string; yarn_company_name?: string; permalink?: string };
+  }[];
+}
+export const CATEGORIES = [
+  ["", "전체"],
+  ["bag", "가방·파우치"],
+  ["clothing", "의류"],
+  ["hat", "모자"],
+  ["softies", "인형"],
+  ["neck-torso", "목도리·숄"],
+  ["home", "생활 소품"],
+  ["socks", "양말"],
+  ["hands", "장갑"],
+] as const;
+export const SORTS = [
+  ["best", "관련도순"],
+  ["projects", "완성작 많은 순"],
+  ["favorites", "관심 많은 순"],
+  ["recently-popular", "최근 인기순"],
+  ["date", "최신 등록순"],
+] as const;
+export type SearchParams = Record<string, string | undefined>;
+const terms: [RegExp, string, string?][] = [
+  [/버킷\s*햇|벙거지/g, "bucket hat", "hat"],
+  [/비니/g, "beanie", "hat"],
+  [/가디건|카디건/g, "cardigan", "clothing"],
+  [/스웨터|니트/g, "sweater", "clothing"],
+  [/파우치/g, "pouch", "bag"],
+  [/가방/g, "", "bag"],
+  [/모자/g, "", "hat"],
+  [/인형|아미구루미/g, "amigurumi", "softies"],
+  [/목도리/g, "scarf", "neck-torso"],
+  [/숄/g, "shawl", "neck-torso"],
+  [/담요|블랭킷/g, "blanket", "home"],
+  [/수세미/g, "scrubbie", "home"],
+  [/티코스터|코스터/g, "coaster", "home"],
+  [/양말/g, "", "socks"],
+  [/장갑/g, "", "hands"],
+  [/토끼/g, "rabbit"],
+  [/고양이/g, "cat"],
+  [/강아지/g, "dog"],
+  [/곰돌이|곰/g, "bear"],
+  [/꽃/g, "flower"],
+  [/작은|미니/g, "mini"],
+];
+export function interpretSearch(input: SearchParams) {
+  let query = (input.query || "").trim().slice(0, 160);
+  let craft = input.craft === "knitting" ? "knitting" : "crochet";
+  let category = CATEGORIES.some(([id]) => id === input.category) ? input.category || "" : "";
+  let availability = ["free", "online", "ravelry"].includes(input.free || "") ? input.free! : "";
+  let difficulty = input.difficulty === "easy" ? "easy" : "";
+  if (/대바늘/.test(query)) craft = "knitting";
+  if (/코바늘/.test(query)) craft = "crochet";
+  if (/무료/.test(query)) availability = "free";
+  if (/초보(?:자)?(?:용)?|쉬운/.test(query)) difficulty = "easy";
+  query = query.replace(/코바늘|대바늘|무료|초보(?:자)?(?:용)?|쉬운/g, " ");
+  for (const [re, english, cat] of terms) {
+    if (re.test(query)) {
+      re.lastIndex = 0;
+      query = query.replace(re, english);
+      if (!category && cat) category = cat;
+    }
+    re.lastIndex = 0;
+  }
+  query = query.replace(/\s+/g, " ").trim();
+  return {
+    query,
+    craft,
+    category,
+    availability,
+    difficulty,
+    language: ["kr", "en", "ja"].includes(input.language || "") ? input.language! : "",
+    format: ["chart", "written-pattern", "video-tutorial"].includes(input.format || "")
+      ? input.format!
+      : "",
+    sort: SORTS.some(([key]) => key === input.sort) ? input.sort! : query ? "best" : "projects",
+    page: Math.min(1000, Math.max(1, Math.floor(Number(input.page) || 1))),
+  };
+}
+export function safeUrl(value?: string | null): string | undefined {
+  if (!value) return;
+  try {
+    const u = new URL(value);
+    if (!["https:", "http:"].includes(u.protocol)) return;
+    if (u.hostname === "www.ravelry.com" || u.hostname === "ravelry.com") u.protocol = "https:";
+    return u.href;
+  } catch {
+    return;
+  }
+}
+export function originalUrl(p: Pattern) {
+  return `https://www.ravelry.com/patterns/library/${encodeURIComponent(p.permalink || String(p.id))}`;
+}
+export function acquisition(p: Pattern) {
+  const location = p.download_location;
+  const download = safeUrl(location?.url);
+  const website = safeUrl(p.url);
+  const links: { label: string; url: string; kind: string }[] = [];
+  // A pattern can be free on a blog AND have a paid Ravelry PDF.
+  if (download)
+    links.push({
+      label:
+        location?.free === true
+          ? "무료 도안 받으러 가기"
+          : location?.free === false
+            ? "도안 구매처로 가기"
+            : "도안 제공처 확인",
+      url: download,
+      kind: location?.free === true ? "free" : "source",
+    });
+  if (website && website !== download)
+    links.push({
+      label: p.free ? "작가 사이트에서 무료 제공 안내 확인" : "작가 사이트 보기",
+      url: website,
+      kind: "website",
+    });
+  // When the web version is free but the download is paid, surface the free route first.
+  if (p.free && location?.free === false && website && website !== download) {
+    links.sort((a, b) => Number(b.kind === "website") - Number(a.kind === "website"));
+  }
+  let label = "제공 방식 확인 필요";
+  if (download && location?.free === true)
+    label = location.type === "ravelry" ? "무료 Ravelry 다운로드" : "무료 제공처 있음";
+  else if (p.free && download && location?.free === false) label = "무료 제공 · 다운로드는 유료";
+  else if (p.free && website) label = "무료 제공 · 웹사이트 확인";
+  else if (download && location?.free === false) label = "유료 다운로드";
+  else if (p.free) label = "무료 · 제공처 확인 필요";
+  else if (
+    p.printings?.some((v) =>
+      ["Book", "Magazine"].includes(v.pattern_source.pattern_source_type?.name || ""),
+    )
+  )
+    label = "책·잡지 수록";
+  else if (p.free === false) label = "유료 · 제공처 확인";
+  return { label, links, original: originalUrl(p) };
+}
+const languages: Record<string, string> = {
+  kr: "한국어",
+  ko: "한국어",
+  en: "영어",
+  ja: "일본어",
+  zh: "중국어",
+  de: "독일어",
+  fr: "프랑스어",
+  es: "스페인어",
+  ru: "러시아어",
+  nl: "네덜란드어",
+  da: "덴마크어",
+  sv: "스웨덴어",
+  no: "노르웨이어",
+  fi: "핀란드어",
+  it: "이탈리아어",
+  pt: "포르투갈어",
+};
+export function languageLabel(p: Pattern) {
+  return p.languages?.length
+    ? [...p.languages]
+        .sort(
+          (a, b) => Number(["kr", "ko"].includes(b.code)) - Number(["kr", "ko"].includes(a.code)),
+        )
+        .map((l) => languages[l.code] || l.name)
+        .join(" · ")
+    : "언어 미확인";
+}
+export function formatLabels(p: Pattern) {
+  const attrs = p.pattern_attributes?.map((a) => a.permalink) || [];
+  return [
+    ["chart", "차트 포함"],
+    ["written-pattern", "서술형"],
+    ["video-tutorial", "영상 포함"],
+    ["phototutorial", "과정 사진"],
+  ]
+    .filter(([id]) => attrs.includes(id))
+    .map(([, label]) => label);
+}
+export function difficultyLabel(p: Pattern) {
+  if (!p.difficulty_count || !p.difficulty_average) return "난이도 평가 없음";
+  return `${p.difficulty_average <= 2 ? "쉬운 편" : p.difficulty_average <= 5 ? "보통" : "도전적인 편"} · ${p.difficulty_average.toFixed(1)}/10`;
+}
+export function meterage(p: Pattern) {
+  if (!p.yardage) return "소요량 미등록";
+  const min = Math.round(p.yardage * 0.9144),
+    max = p.yardage_max ? Math.round(p.yardage_max * 0.9144) : min;
+  return `${min.toLocaleString("ko-KR")}${max > min ? `–${max.toLocaleString("ko-KR")}` : ""} m`;
+}
+export function priceLabel(p: Pattern) {
+  if (p.price == null || !p.currency) return "";
+  try {
+    return new Intl.NumberFormat("ko-KR", { style: "currency", currency: p.currency }).format(
+      Number(p.price),
+    );
+  } catch {
+    return `${p.price} ${p.currency}`;
+  }
+}
+export interface SavedPattern {
+  id: number;
+  name: string;
+  image: string;
+  designer: string;
+}
+export function savedPattern(p: Pattern): SavedPattern {
+  return {
+    id: p.id,
+    name: p.name,
+    image: safeUrl(p.first_photo?.medium_url || p.photos?.[0]?.medium_url) || "",
+    designer: p.pattern_author?.name || p.designer?.name || "작가 미등록",
+  };
+}
+export function detailHref(id: number, returnTo = "/") {
+  return `/pattern/${id}?from=${encodeURIComponent(returnTo)}`;
+}
+export function safeReturn(value?: string) {
+  return typeof value === "string" &&
+    (value === "/" || value.startsWith("/?") || value === "/saved")
+    ? value
+    : "/";
+}
