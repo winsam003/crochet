@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Bookmark, Check, ArrowUpRight, Trash2 } from "lucide-react";
+import { Bookmark, ArrowUpRight, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { type SavedPattern, detailHref } from "@/lib/patterns";
 import PatternImage from "./PatternImage";
@@ -159,35 +159,6 @@ export function LibraryView() {
         </button>
       )}
       {error && <p role="status">저장 공간에 접근할 수 없어요.</p>}
-    </>
-  );
-}
-export function AcquiredButton({ id }: { id: number }) {
-  const key = `winsam.acquired.${id}`;
-  const value = useSyncExternalStore(
-    subscribe,
-    () => snapshot(key),
-    () => "[]",
-  );
-  const [error, setError] = useState(false);
-  return (
-    <>
-      <button
-        className="text-link acquired"
-        aria-pressed={value === "yes"}
-        onClick={() => {
-          try {
-            localStorage.setItem(key, value === "yes" ? "no" : "yes");
-            window.dispatchEvent(new Event(EVENT));
-          } catch {
-            setError(true);
-          }
-        }}
-      >
-        <Check size={16} />
-        {value === "yes" ? "도안을 구했어요 · 기록됨" : "도안을 구했어요"}
-      </button>
-      {error && <p role="status">이 브라우저에 기록할 수 없어요.</p>}
     </>
   );
 }

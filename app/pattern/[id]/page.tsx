@@ -15,7 +15,7 @@ import {
   safeUrl,
 } from "@/lib/patterns";
 import { translateYarnWeight } from "@/lib/utils";
-import { SaveButton, RecentTracker, AcquiredButton } from "@/components/Library";
+import { SaveButton, RecentTracker } from "@/components/Library";
 import PatternImage from "@/components/PatternImage";
 import RelatedPatterns from "@/components/RelatedPatterns";
 export default async function PatternDetailPage({
@@ -151,7 +151,6 @@ export default async function PatternDetailPage({
             </p>
             <div className="save-actions">
               <SaveButton pattern={saved} />
-              <AcquiredButton id={p.id} />
             </div>
           </div>
         </section>

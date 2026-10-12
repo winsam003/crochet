@@ -852,9 +852,6 @@ button {
   padding: 7px 10px;
   border-color: #bac1ae;
 }
-.acquired {
-  font-size: 11px;
-}
 .is-saved {
   color: var(--rust);
 }
