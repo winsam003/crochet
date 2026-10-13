@@ -30,7 +30,10 @@ export default async function RelatedPatterns({
             </div>
             <div>
               <h3>{p.name}</h3>
-              <p>{p.designer?.name}</p>
+              <p className="mini-designer">
+                <span className="designer-label">작가</span>{" "}
+                {p.pattern_author?.name || p.designer?.name || "미등록"}
+              </p>
             </div>
           </Link>
         ))}

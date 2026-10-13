@@ -29,3 +29,22 @@ for (const [name, filter, check] of [
   for (const id of ids) assert.ok(check(details.patterns[id]), `${name}: incorrect result ${id}`);
   console.log(`${name}: ${ids.length} verified patterns (${data.paginator.results} results)`);
 }
+
+for (const designer of ["PetiteKnit", "Sarah Zimmerman"]) {
+  for (const page of [1, 2]) {
+    const params = new URLSearchParams({
+      designer,
+      page: String(page),
+      page_size: "3",
+      photo: "yes",
+    });
+    const data = await get(`patterns/search.json?${params}`);
+    assert.ok(data.patterns.length, `${designer}: empty result`);
+    for (const pattern of data.patterns) assert.equal(pattern.designer?.name, designer);
+    assert.equal(data.paginator.page, page);
+    console.log(`Designer ${designer}, page ${page}: ${data.patterns.length} verified patterns`);
+  }
+}
+const missingDesigner = await get("patterns/search.json?designer=unlikely-designer-xyz123456");
+assert.equal(missingDesigner.patterns.length, 0);
+console.log("Unknown designer: empty result verified");

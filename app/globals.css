@@ -1478,3 +1478,103 @@ th {
     transition: none !important;
   }
 }
+
+.designer-search {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding-top: 18px;
+  font-size: 12px;
+}
+.designer-search label {
+  color: var(--muted);
+}
+.designer-search input {
+  flex: 1 1 220px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+}
+.designer-search input:focus-visible {
+  outline: 2px solid var(--rust);
+  outline-offset: 2px;
+}
+.designer-search p {
+  margin: 0;
+  color: var(--muted);
+}
+/* Keep author attribution readable on desktop and narrow cards alike. */
+.designer-byline {
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+.designer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.designer-label {
+  flex-shrink: 0;
+  color: var(--rust);
+  font-size: 12px;
+  font-weight: 600;
+}
+.designer-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.designer-link svg {
+  flex-shrink: 0;
+  color: var(--rust);
+}
+.designer-link:hover {
+  border-color: var(--rust);
+  color: var(--rust);
+}
+.designer-link:focus-visible {
+  outline: 2px solid var(--rust);
+  outline-offset: 3px;
+}
+.designer .designer-link {
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 17px;
+}
+.designer-missing {
+  color: var(--muted);
+  font-size: 13px;
+}
+.mini-card .mini-designer {
+  margin-top: 7px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .designer-link {
+    gap: 6px;
+    padding: 7px 8px;
+    font-size: 13px;
+  }
+}

@@ -99,7 +99,13 @@ const terms: [RegExp, string, string?][] = [
 ];
 export function interpretSearch(input: SearchParams) {
   let query = (input.query || "").trim().slice(0, 160);
-  let craft = input.craft === "knitting" ? "knitting" : "crochet";
+  const designer = (input.designer || "").trim().slice(0, 160);
+  let craft =
+    input.craft === "all" || ((!input.craft || input.craft === "auto") && designer)
+      ? ""
+      : input.craft === "knitting"
+        ? "knitting"
+        : "crochet";
   let category = CATEGORIES.some(([id]) => id === input.category) ? input.category || "" : "";
   let availability = ["free", "online", "ravelry"].includes(input.free || "") ? input.free! : "";
   let difficulty = input.difficulty === "easy" ? "easy" : "";
@@ -119,6 +125,7 @@ export function interpretSearch(input: SearchParams) {
   query = query.replace(/\s+/g, " ").trim();
   return {
     query,
+    designer,
     craft,
     category,
     availability,
@@ -269,4 +276,8 @@ export function safeReturn(value?: string) {
     (value === "/" || value.startsWith("/?") || value === "/saved")
     ? value
     : "/";
+}
+
+export function designerHref(name: string) {
+  return `/?${new URLSearchParams({ designer: name, craft: "all" })}#results`;
 }

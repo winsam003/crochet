@@ -40,6 +40,7 @@ export default async function HomePage({
   const patterns = data?.patterns || [],
     totalPages = data?.paginator.page_count || 1;
   const active = !!(
+    s.designer ||
     params.query ||
     params.category ||
     params.free ||
@@ -92,10 +93,27 @@ export default async function HomePage({
               도안 찾기 <ArrowRight size={17} />
             </button>
           </div>
+          <div className="designer-search">
+            <label htmlFor="designer">작가명</label>
+            <input
+              id="designer"
+              name="designer"
+              defaultValue={s.designer}
+              placeholder="예: PetiteKnit, Sarah Zimmerman"
+              maxLength={160}
+              aria-describedby="designer-hint"
+            />
+            <p id="designer-hint">
+              Ravelry에 등록된 작가명을 입력하세요. 뜨개 종류가 자동이면 작가 검색 시 전체를
+              보여드려요.
+            </p>
+          </div>
           <div className="filter-row">
             <label>
               뜨개 종류
-              <select name="craft" defaultValue={s.craft}>
+              <select name="craft" defaultValue={params.craft || "auto"}>
+                <option value="auto">자동 선택</option>
+                <option value="all">전체</option>
                 <option value="crochet">코바늘</option>
                 <option value="knitting">대바늘</option>
               </select>
@@ -168,14 +186,22 @@ export default async function HomePage({
             많이 뜬 대바늘 의류 <ArrowUpRight size={13} />
           </Link>
         </div>
-        {params.query && (
+        {(params.query || s.designer) && (
           <p className="search-interpretation">
-            검색에 반영한 조건: {s.craft === "crochet" ? "코바늘" : "대바늘"}
+            검색에 반영한 조건:{" "}
+            {s.craft === "crochet"
+              ? "코바늘"
+              : s.craft === "knitting"
+                ? "대바늘"
+                : "모든 뜨개 종류"}
+            {s.designer && ` · 작가 “${s.designer}”`}
             {s.category && ` · ${CATEGORIES.find(([id]) => id === s.category)?.[1]}`}
             {s.difficulty && " · 쉬운 편"}
             {s.availability === "free" && " · 무료"}
             {s.query && ` · “${s.query}”`}
-            <span>한국어 일부 용어를 검색 조건으로 바꿨어요. 위에서 조정할 수 있어요.</span>
+            {params.query && (
+              <span>한국어 일부 용어를 검색 조건으로 바꿨어요. 위에서 조정할 수 있어요.</span>
+            )}
           </p>
         )}
       </section>
@@ -184,7 +210,11 @@ export default async function HomePage({
           <div>
             <p className="eyebrow">THE PATTERN INDEX</p>
             <h2>
-              {active ? "찾고 있던 도안" : "오래 사랑받는 도안"}
+              {s.designer
+                ? `${s.designer} 작가의 도안`
+                : active
+                  ? "찾고 있던 도안"
+                  : "오래 사랑받는 도안"}
               <span>
                 {data
                   ? `${data.paginator.results.toLocaleString("ko-KR")}${data.paginator.results >= 100000 ? "+" : ""}`

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DesignerLink from "./DesignerLink";
 import { ArrowUpRight } from "lucide-react";
 import {
   acquisition,
@@ -40,10 +41,12 @@ export default function PatternCard({
         <SaveButton pattern={savedPattern(p)} compact />
       </div>
       <div className="card-copy">
-        <p className="eyebrow">{p.pattern_author?.name || p.designer?.name || "작가 미등록"}</p>
         <h3>
           <Link href={href}>{p.name}</Link>
         </h3>
+        <p className="designer-byline">
+          <DesignerLink pattern={p} />
+        </p>
         <p className="card-languages">
           {languageLabel(p)}
           {formats.length > 0 && ` / ${formats.slice(0, 2).join(" · ")}`}

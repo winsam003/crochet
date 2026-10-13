@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   acquisition,
+  designerHref,
   interpretSearch,
   meterage,
   safeReturn,
@@ -79,4 +80,33 @@ test("Ravelry uses kr, Korean language is shown first", () => {
     }),
     "한국어 · 영어",
   );
+});
+
+test("designer searches preserve names and search both crafts by default", () => {
+  const s = interpretSearch({
+    designer: "  무료 꽃 Studio  ",
+    craft: "auto",
+    query: "가방",
+    page: "2",
+  });
+  assert.equal(s.designer, "무료 꽃 Studio");
+  assert.equal(s.query, "");
+  assert.equal(s.category, "bag");
+  assert.equal(s.availability, "");
+  assert.equal(s.craft, "");
+  assert.equal(s.page, 2);
+  assert.equal(interpretSearch({ designer: "PetiteKnit" }).craft, "");
+  assert.equal(interpretSearch({ designer: "PetiteKnit", craft: "knitting" }).craft, "knitting");
+  assert.equal(interpretSearch({ designer: "Sarah Zimmerman", craft: "crochet" }).craft, "crochet");
+  assert.equal(interpretSearch({ craft: "auto" }).craft, "crochet");
+  assert.equal(interpretSearch({ craft: "all" }).craft, "");
+  assert.equal(interpretSearch({ designer: " ".repeat(10) }).designer, "");
+  assert.equal(interpretSearch({ designer: "a".repeat(200) }).designer.length, 160);
+});
+test("designer links safely preserve special characters and reset other filters", () => {
+  const url = new URL(designerHref("A&B / 꽃 + Studio"), "https://example.com");
+  assert.equal(url.searchParams.get("designer"), "A&B / 꽃 + Studio");
+  assert.equal(url.searchParams.get("craft"), "all");
+  assert.equal(url.searchParams.has("page"), false);
+  assert.equal(url.hash, "#results");
 });

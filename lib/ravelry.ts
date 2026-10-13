@@ -41,10 +41,11 @@ export async function getPatterns(input: SearchParams = {}): Promise<SearchResul
     query: s.query,
     page: String(s.page),
     page_size: "12",
-    craft: s.craft,
     sort: s.sort,
     photo: "yes",
   });
+  if (s.craft) params.set("craft", s.craft);
+  if (s.designer) params.set("designer", s.designer);
   if (s.availability) params.set("availability", s.availability);
   if (s.category) params.set("pc", s.category);
   if (s.language) params.set("language", s.language);

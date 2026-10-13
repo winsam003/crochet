@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DesignerLink from "@/components/DesignerLink";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, ExternalLink, BookOpen } from "lucide-react";
@@ -89,7 +90,9 @@ export default async function PatternDetailPage({
             {craft === "crochet" ? "CROCHET / 코바늘" : "KNITTING / 대바늘"}
           </p>
           <h1>{p.name}</h1>
-          <p className="designer">designed by {p.pattern_author?.name || "작가 미등록"}</p>
+          <p className="designer">
+            <DesignerLink pattern={p} />
+          </p>
           <div className="detail-tags">
             <span>{languageLabel(p)}</span>
             {formats.length ? (

@@ -24,7 +24,10 @@ export default async function HotPatterns({ craft = "crochet" }: { craft?: strin
             <span className="mini-index">0{i + 1}</span>
             <div>
               <h3>{p.name}</h3>
-              <p>{p.designer?.name}</p>
+              <p className="mini-designer">
+                <span className="designer-label">작가</span>{" "}
+                {p.pattern_author?.name || p.designer?.name || "미등록"}
+              </p>
             </div>
           </Link>
         ))}

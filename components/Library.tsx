@@ -4,6 +4,7 @@ import { Bookmark, ArrowUpRight, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { type SavedPattern, detailHref } from "@/lib/patterns";
 import PatternImage from "./PatternImage";
+import DesignerLink from "./DesignerLink";
 const EVENT = "winsam-library";
 const keys = { saved: "winsam.saved.v1", recent: "winsam.recent.v1" };
 function subscribe(callback: () => void) {
@@ -126,10 +127,18 @@ export function LibraryView() {
                 <SaveButton pattern={p} compact />
               </div>
               <div className="card-copy">
-                <p className="eyebrow">{p.designer}</p>
                 <h2>
                   <Link href={detailHref(p.id, "/saved")}>{p.name}</Link>
                 </h2>
+                <p className="designer-byline">
+                  <DesignerLink
+                    pattern={{
+                      id: p.id,
+                      name: p.name,
+                      designer: { name: p.designer === "작가 미등록" ? undefined : p.designer },
+                    }}
+                  />
+                </p>
                 <Link className="text-link" href={detailHref(p.id, "/saved")}>
                   도안 다시 보기 <ArrowUpRight size={15} />
                 </Link>
