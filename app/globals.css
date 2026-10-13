@@ -872,6 +872,48 @@ button {
 .material-list {
   margin: 24px 0;
 }
+.preparation-summary {
+  margin: 24px 0;
+  padding: 20px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.preparation-summary h2 {
+  font-size: 17px;
+  margin: 0 0 16px;
+}
+.preparation-summary dl > div {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  gap: 12px;
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.preparation-summary dt,
+.preparation-summary p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.preparation-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.preparation-summary small {
+  display: block;
+}
+.preparation-summary a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+#crochet-terms {
+  scroll-margin-top: 30px;
+  margin-bottom: 32px;
+}
+#crochet-terms .terminology-note {
+  margin-top: 0;
+}
 .material-list > div {
   display: grid;
   grid-template-columns: 100px 1fr;

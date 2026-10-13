@@ -10,19 +10,19 @@ export function translateYarnWeight(description?: string | null) {
   if (!description) return "실 굵기 미등록";
   const labels: [string, string][] = [
     ["super bulky", "아주 굵은 실"],
-    ["jumbo", "초극태사"],
+    ["jumbo", "매우 굵은 실"],
     ["bulky", "굵은 실"],
     ["aran", "도톰한 실"],
     ["worsted", "중간보다 굵은 실"],
-    ["dk", "중간 굵기"],
+    ["dk", "중간 굵기 실"],
     ["sport", "조금 가는 실"],
     ["fingering", "가는 실"],
     ["cobweb", "아주 가는 실"],
-    ["lace", "레이스 굵기"],
+    ["lace", "레이스용 가는 실"],
     ["thread", "레이스용 실"],
   ];
   const label = labels.find(([key]) => description.toLowerCase().includes(key));
-  return label ? `${description} · ${label[1]}` : description;
+  return label ? `${label[1]} (${description})` : description;
 }
 
 // lib/utils.ts

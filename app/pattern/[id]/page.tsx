@@ -18,6 +18,7 @@ import {
 import { translateYarnWeight } from "@/lib/utils";
 import { SaveButton, RecentTracker } from "@/components/Library";
 import PatternImage from "@/components/PatternImage";
+import CrochetTerms from "@/components/CrochetTerms";
 import RelatedPatterns from "@/components/RelatedPatterns";
 export default async function PatternDetailPage({
   params,
@@ -35,7 +36,9 @@ export default async function PatternDetailPage({
     saved = savedPattern(p),
     photos = p.photos || [];
   const needles = [...new Set(p.pattern_needle_sizes?.map((n) => n.metric) || [])];
-  const craft = p.craft?.permalink || "crochet";
+  const craft = p.craft?.permalink;
+  const craftLabel =
+    craft === "crochet" ? "코바늘" : craft === "knitting" ? "대바늘" : "뜨개 종류 미확인";
   const yarns = [
     ...new Set(
       (p.packs || [])
@@ -86,9 +89,7 @@ export default async function PatternDetailPage({
           )}
         </section>
         <section className="detail-overview">
-          <p className="eyebrow accent">
-            {craft === "crochet" ? "CROCHET / 코바늘" : "KNITTING / 대바늘"}
-          </p>
+          <p className="eyebrow accent">{craftLabel}</p>
           <h1>{p.name}</h1>
           <p className="designer">
             <DesignerLink pattern={p} />
@@ -101,6 +102,46 @@ export default async function PatternDetailPage({
               <span>도안 형식 미확인</span>
             )}
           </div>
+          <section className="preparation-summary" aria-labelledby="preparation-title">
+            <h2 id="preparation-title">이 도안, 뜨려면 뭐가 필요해요?</h2>
+            <dl>
+              <div>
+                <dt>준비할 바늘</dt>
+                <dd>
+                  {needles.length
+                    ? `${craft === "crochet" || craft === "knitting" ? craftLabel : "바늘"} ${needles.join(" / ")} mm`
+                    : "바늘 크기 미등록"}
+                </dd>
+              </div>
+              <div>
+                <dt>준비할 실</dt>
+                <dd>
+                  {translateYarnWeight(p.yarn_weight?.name || p.yarn_weight_description)}
+                  <br />
+                  {p.yardage ? `필요한 길이 ${meterage(p)}` : "소요량 미등록"}
+                </dd>
+              </div>
+              <div>
+                <dt>도안 읽기</dt>
+                <dd>
+                  {languageLabel(p)} · {formats.length ? formats.join(" · ") : "도안 형식 미확인"}
+                  {craft === "crochet" && (
+                    <small>
+                      {p.has_us_terminology && p.has_uk_terminology
+                        ? "미국식·영국식 약어 모두 제공"
+                        : p.has_us_terminology
+                          ? "미국식(US) 약어 사용"
+                          : p.has_uk_terminology
+                            ? "영국식(UK) 약어 사용"
+                            : "약어 기준 미등록"}{" "}
+                      · <a href="#crochet-terms">약어 뜻 바로 보기</a>
+                    </small>
+                  )}
+                </dd>
+              </div>
+            </dl>
+            <p>등록된 준비물 기준이에요. 선택할 사이즈의 실 소요량은 도안에서 확인하세요.</p>
+          </section>
           <div className="overview-stats">
             <div>
               <span>뜨는 난이도</span>
@@ -120,7 +161,7 @@ export default async function PatternDetailPage({
             </div>
           </div>
           <div className="acquisition-box">
-            <p className="eyebrow">GET THE PATTERN</p>
+            <p className="eyebrow">도안 받기</p>
             <h2>{access.label}</h2>
             {priceLabel(p) && (
               <p className="price-line">
@@ -160,7 +201,7 @@ export default async function PatternDetailPage({
       </div>
       <div className="detail-content">
         <section className="materials">
-          <p className="eyebrow">BEFORE YOU BEGIN</p>
+          <p className="eyebrow">실과 바늘 준비</p>
           <h2>시작하기 전에 준비해요.</h2>
           <p className="section-note">
             도안에 등록된 정보를 모았어요. 사이즈별 준비물은 원문에서 확인해 주세요.
@@ -191,12 +232,18 @@ export default async function PatternDetailPage({
               </dd>
             </div>
             <div>
-              <dt>게이지</dt>
+              <dt>
+                코·단 수<br />
+                (게이지)
+              </dt>
               <dd>
                 {p.gauge
-                  ? `${p.gauge}코${p.row_gauge ? ` × ${p.row_gauge}단` : ""} / ${Math.round((p.gauge_divisor || 4) * 2.54 * 10) / 10} cm`
+                  ? `${Math.round((p.gauge_divisor || 4) * 2.54 * 10) / 10}cm 안에 ${p.gauge}코${p.row_gauge ? ` × ${p.row_gauge}단` : ""}`
                   : "미등록"}
-                {p.gauge_pattern && <small>{p.gauge_pattern}</small>}
+                <small>
+                  도안의 무늬로 떠서, 안내된 길이 안에 같은 수의 코와 단이 들어가는지 확인해요.
+                </small>
+                {p.gauge_pattern && <small>측정할 무늬 (원문): {p.gauge_pattern}</small>}
               </dd>
             </div>
             <div>
@@ -212,7 +259,12 @@ export default async function PatternDetailPage({
           </Link>
         </section>
         <section className="pattern-notes">
-          <p className="eyebrow">DESIGNER’S NOTES</p>
+          {craft === "crochet" && (
+            <div id="crochet-terms">
+              <CrochetTerms pattern={p} />
+            </div>
+          )}
+          <p className="eyebrow">도안 소개</p>
           <h2>작가의 도안 소개</h2>
           <p className="section-note">소개글이며, 실제 도안 파일의 전체 내용과는 다를 수 있어요.</p>
           {p.notes ? (
@@ -233,23 +285,6 @@ export default async function PatternDetailPage({
           ) : (
             <p className="notice">등록된 소개글이 없어요. 원문 제공처에서 확인해 주세요.</p>
           )}
-          {craft === "crochet" && (
-            <div className="terminology-note">
-              <h3>코바늘 약어, 어떤 기준인가요?</h3>
-              <p>
-                {p.has_us_terminology && p.has_uk_terminology
-                  ? "미국식·영국식 표기가 모두 등록되어 있어요. 받은 파일의 기준을 확인하세요."
-                  : p.has_us_terminology
-                    ? "미국식(US) 약어가 등록된 도안이에요."
-                    : p.has_uk_terminology
-                      ? "영국식(UK) 약어가 등록된 도안이에요."
-                      : "약어 기준이 등록되어 있지 않아요. 원문에서 US / UK 표기를 확인하세요."}
-              </p>
-              <Link className="text-link" href="/guide#terms">
-                약어 읽는 법 <ArrowUpRight size={14} />
-              </Link>
-            </div>
-          )}
           {!!p.printings?.length && (
             <div className="source-list">
               <h3>도안이 실린 곳</h3>
@@ -266,7 +301,7 @@ export default async function PatternDetailPage({
       <Suspense fallback={null}>
         <RelatedPatterns
           category={p.pattern_categories?.[0]?.permalink || ""}
-          craft={craft}
+          craft={craft || ""}
           id={p.id}
         />
       </Suspense>

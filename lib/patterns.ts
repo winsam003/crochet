@@ -226,9 +226,9 @@ export function languageLabel(p: Pattern) {
 export function formatLabels(p: Pattern) {
   const attrs = p.pattern_attributes?.map((a) => a.permalink) || [];
   return [
-    ["chart", "차트 포함"],
-    ["written-pattern", "서술형"],
-    ["video-tutorial", "영상 포함"],
+    ["chart", "기호 도안 포함"],
+    ["written-pattern", "글로 설명하는 도안"],
+    ["video-tutorial", "따라 볼 영상 있음"],
     ["phototutorial", "과정 사진"],
   ]
     .filter(([id]) => attrs.includes(id))

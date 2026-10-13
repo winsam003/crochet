@@ -150,9 +150,9 @@ export default async function HomePage({
               도안 형식
               <select name="format" defaultValue={s.format}>
                 <option value="">전체 형식</option>
-                <option value="chart">차트 포함</option>
-                <option value="written-pattern">서술형</option>
-                <option value="video-tutorial">영상 포함</option>
+                <option value="chart">기호 도안 포함</option>
+                <option value="written-pattern">글로 설명하는 도안</option>
+                <option value="video-tutorial">따라 볼 영상 있음</option>
               </select>
             </label>
             <label>
@@ -180,7 +180,7 @@ export default async function HomePage({
             한국어로 읽는 도안 <ArrowUpRight size={13} />
           </Link>
           <Link href="/?craft=crochet&free=free&format=chart">
-            차트가 있는 무료 도안 <ArrowUpRight size={13} />
+            기호 도안이 있는 무료 도안 <ArrowUpRight size={13} />
           </Link>
           <Link href="/?craft=knitting&category=clothing&sort=projects">
             많이 뜬 대바늘 의류 <ArrowUpRight size={13} />
