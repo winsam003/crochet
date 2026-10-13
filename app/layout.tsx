@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Bookmark, MoveUpRight } from "lucide-react";
 import { Analytics } from "@vercel/analytics/next";
-import AdFit from "@/lib/Adfit";
+import AdSlot from "@/components/AdSlot";
 export const metadata: Metadata = {
   title: { default: "WinSam Crochet — 다음에 뜰 것을 찾아요", template: "%s · WinSam Crochet" },
   description:
@@ -43,10 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         <main id="main">{children}</main>
-        <div className="footer-ad">
-          <span>ADVERTISEMENT</span>
-          <AdFit unit="DAN-Isg7W9GyLwQgmWcF" width="300" height="250" />
-        </div>
+        <AdSlot footer />
         <footer className="site-footer">
           <div className="footer-inner">
             <div>

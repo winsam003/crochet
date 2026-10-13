@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AdSlot from "@/components/AdSlot";
 import DesignerLink from "@/components/DesignerLink";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
@@ -199,6 +200,7 @@ export default async function PatternDetailPage({
           </div>
         </section>
       </div>
+      <AdSlot />
       <div className="detail-content">
         <section className="materials">
           <p className="eyebrow">실과 바늘 준비</p>

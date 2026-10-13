@@ -14,10 +14,11 @@ export default function AdFit({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     // 1. 이전 광고 잔재물 청소 (중요)
-    containerRef.current.innerHTML = "";
+    container.innerHTML = "";
 
     // 2. ins 태그 동적 생성
     const ins = document.createElement("ins");
@@ -35,22 +36,20 @@ export default function AdFit({
     script.async = true;
 
     // 4. 컨테이너에 삽입
-    containerRef.current.appendChild(ins);
-    containerRef.current.appendChild(script);
+    container.appendChild(ins);
+    container.appendChild(script);
 
     return () => {
       // 페이지를 떠날 때 깔끔하게 비우기
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
+      container.innerHTML = "";
     };
-  }, [unit]); // 유닛이 바뀌거나 페이지가 전환되어 컴포넌트가 다시 마운트될 때 실행
+  }, [unit, width, height]); // 유닛이 바뀌거나 페이지가 전환되어 컴포넌트가 다시 마운트될 때 실행
 
   return (
-    <div 
-      ref={containerRef} 
-      className="flex justify-center items-center w-full overflow-hidden" 
-      style={{ minHeight: `${height}px` }} 
+    <div
+      ref={containerRef}
+      className="flex justify-center items-center w-full overflow-hidden"
+      style={{ minHeight: `${height}px` }}
     />
   );
 }

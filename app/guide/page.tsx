@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AdSlot from "@/components/AdSlot";
 import { ArrowUpRight } from "lucide-react";
 export const metadata = { title: "뜨개 길잡이" };
 export default function GuidePage() {
@@ -46,6 +47,7 @@ export default function GuidePage() {
               실제 도안에서 확인하세요.
             </div>
           </section>
+          <AdSlot />
           <section id="gauge">
             <span className="guide-number">03</span>
             <h2>게이지는 크기를 맞추는 작은 연습.</h2>

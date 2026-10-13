@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import AdSlot from "@/components/AdSlot";
+import { Fragment, Suspense } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -12,6 +13,7 @@ import { getPatterns } from "@/lib/ravelry";
 import { CATEGORIES, SORTS, interpretSearch, type SearchParams } from "@/lib/patterns";
 import PatternCard from "@/components/PatternCard";
 import HotPatterns from "@/components/HotPatterns";
+import DiscoverPatterns from "@/components/DiscoverPatterns";
 export default async function HomePage({
   searchParams,
 }: {
@@ -31,9 +33,10 @@ export default async function HomePage({
     next.set("page", String(page));
     return `/?${next}#results`;
   };
+  const isDiscovery = !Object.values(params).some((value) => value?.trim());
   let data;
   try {
-    data = await getPatterns(params);
+    if (!isDiscovery) data = await getPatterns(params);
   } catch {
     /* Show a recoverable error, never fabricated patterns. */
   }
@@ -46,7 +49,10 @@ export default async function HomePage({
     params.free ||
     params.format ||
     params.difficulty ||
-    params.language
+    params.language ||
+    params.craft ||
+    params.sort ||
+    params.page
   );
   return (
     <div className="page-shell">
@@ -205,91 +211,106 @@ export default async function HomePage({
           </p>
         )}
       </section>
-      <section id="results" className="results-section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">THE PATTERN INDEX</p>
-            <h2>
-              {s.designer
-                ? `${s.designer} 작가의 도안`
-                : active
-                  ? "찾고 있던 도안"
-                  : "오래 사랑받는 도안"}
-              <span>
-                {data
-                  ? `${data.paginator.results.toLocaleString("ko-KR")}${data.paginator.results >= 100000 ? "+" : ""}`
-                  : ""}
-              </span>
-            </h2>
-          </div>
-          {active ? (
-            <Link className="text-link" href="/">
-              조건 초기화 <SlidersHorizontal size={15} />
-            </Link>
-          ) : (
-            <p className="section-note">완성작이 많은 순서로 모았어요.</p>
-          )}
-        </div>
-        {data?.detailsUnavailable && (
-          <p className="notice">
-            일부 상세 정보를 가져오지 못했어요. 언어·준비물은 도안 상세에서 다시 확인해 주세요.
-          </p>
-        )}
-        {!data ? (
-          <div className="empty-state">
-            <h3>잠시 도안을 불러오지 못했어요.</h3>
-            <p>검색 조건은 그대로 남아 있어요. 잠시 후 다시 시도해 주세요.</p>
-            <a className="primary-button" href={returnTo}>
-              다시 불러오기 <ArrowRight size={16} />
-            </a>
-          </div>
-        ) : !patterns.length ? (
-          <div className="empty-state">
-            <Search size={28} />
-            <h3>이 조건에 맞는 도안이 없어요.</h3>
-            <p>조건을 조금 줄이거나 다른 이름으로 찾아보세요.</p>
-            <Link href="/" className="primary-button">
-              전체 도안 보기
-            </Link>
-          </div>
-        ) : (
-          <>
-            <div className="pattern-grid">
-              {patterns.map((p, i) => (
-                <PatternCard key={p.id} pattern={p} returnTo={returnTo} index={i} />
-              ))}
+      {isDiscovery ? (
+        <Suspense
+          fallback={
+            <p className="notice" role="status">
+              둘러볼 도안을 찾고 있어요…
+            </p>
+          }
+        >
+          <DiscoverPatterns />
+        </Suspense>
+      ) : (
+        <section id="results" className="results-section">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">THE PATTERN INDEX</p>
+              <h2>
+                {s.designer
+                  ? `${s.designer} 작가의 도안`
+                  : active
+                    ? "찾고 있던 도안"
+                    : "오래 사랑받는 도안"}
+                <span>
+                  {data
+                    ? `${data.paginator.results.toLocaleString("ko-KR")}${data.paginator.results >= 100000 ? "+" : ""}`
+                    : ""}
+                </span>
+              </h2>
             </div>
-            <nav aria-label="검색 결과 페이지" className="pagination">
-              {s.page > 1 ? (
-                <Link href={pageUrl(s.page - 1)} aria-label="이전 페이지">
-                  <ChevronLeft size={18} />
-                </Link>
-              ) : (
-                <span className="disabled">
-                  <ChevronLeft size={18} />
-                </span>
-              )}
-              {Array.from(
-                { length: Math.min(5, totalPages) },
-                (_, i) => Math.max(1, Math.min(s.page - 2, totalPages - 4)) + i,
-              ).map((n) => (
-                <Link key={n} href={pageUrl(n)} aria-current={n === s.page ? "page" : undefined}>
-                  {n}
-                </Link>
-              ))}
-              {s.page < Math.min(1000, totalPages) ? (
-                <Link href={pageUrl(s.page + 1)} aria-label="다음 페이지">
-                  <ChevronRight size={18} />
-                </Link>
-              ) : (
-                <span className="disabled">
-                  <ChevronRight size={18} />
-                </span>
-              )}
-            </nav>
-          </>
-        )}
-      </section>
+            {active ? (
+              <Link className="text-link" href="/">
+                조건 초기화 <SlidersHorizontal size={15} />
+              </Link>
+            ) : (
+              <p className="section-note">완성작이 많은 순서로 모았어요.</p>
+            )}
+          </div>
+          {data?.detailsUnavailable && (
+            <p className="notice">
+              일부 상세 정보를 가져오지 못했어요. 언어·준비물은 도안 상세에서 다시 확인해 주세요.
+            </p>
+          )}
+          {!data ? (
+            <div className="empty-state">
+              <h3>잠시 도안을 불러오지 못했어요.</h3>
+              <p>검색 조건은 그대로 남아 있어요. 잠시 후 다시 시도해 주세요.</p>
+              <a className="primary-button" href={returnTo}>
+                다시 불러오기 <ArrowRight size={16} />
+              </a>
+            </div>
+          ) : !patterns.length ? (
+            <div className="empty-state">
+              <Search size={28} />
+              <h3>이 조건에 맞는 도안이 없어요.</h3>
+              <p>조건을 조금 줄이거나 다른 이름으로 찾아보세요.</p>
+              <Link href="/" className="primary-button">
+                전체 도안 보기
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="pattern-grid">
+                {patterns.map((p, i) => (
+                  <Fragment key={p.id}>
+                    <PatternCard pattern={p} returnTo={returnTo} index={i} />
+                    {(i === 5 || i === 17) && i < patterns.length - 1 && <AdSlot />}
+                  </Fragment>
+                ))}
+              </div>
+              <nav aria-label="검색 결과 페이지" className="pagination">
+                {s.page > 1 ? (
+                  <Link href={pageUrl(s.page - 1)} aria-label="이전 페이지">
+                    <ChevronLeft size={18} />
+                  </Link>
+                ) : (
+                  <span className="disabled">
+                    <ChevronLeft size={18} />
+                  </span>
+                )}
+                {Array.from(
+                  { length: Math.min(5, totalPages) },
+                  (_, i) => Math.max(1, Math.min(s.page - 2, totalPages - 4)) + i,
+                ).map((n) => (
+                  <Link key={n} href={pageUrl(n)} aria-current={n === s.page ? "page" : undefined}>
+                    {n}
+                  </Link>
+                ))}
+                {s.page < Math.min(1000, totalPages) ? (
+                  <Link href={pageUrl(s.page + 1)} aria-label="다음 페이지">
+                    <ChevronRight size={18} />
+                  </Link>
+                ) : (
+                  <span className="disabled">
+                    <ChevronRight size={18} />
+                  </span>
+                )}
+              </nav>
+            </>
+          )}
+        </section>
+      )}
       <aside className="guide-banner">
         <div>
           <p className="eyebrow">BEFORE YOUR FIRST STITCH</p>
@@ -300,9 +321,11 @@ export default async function HomePage({
           뜨개 길잡이 <ArrowUpRight size={17} />
         </Link>
       </aside>
-      <Suspense fallback={null}>
-        <HotPatterns craft={s.craft} />
-      </Suspense>
+      {!isDiscovery && (
+        <Suspense fallback={null}>
+          <HotPatterns craft={s.craft} />
+        </Suspense>
+      )}
     </div>
   );
 }
