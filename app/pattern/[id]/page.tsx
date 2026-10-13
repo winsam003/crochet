@@ -21,6 +21,7 @@ import { SaveButton, RecentTracker } from "@/components/Library";
 import PatternImage from "@/components/PatternImage";
 import CrochetTerms from "@/components/CrochetTerms";
 import RelatedPatterns from "@/components/RelatedPatterns";
+import PatternVideos from "@/components/PatternVideos";
 export default async function PatternDetailPage({
   params,
   searchParams,
@@ -300,6 +301,15 @@ export default async function PatternDetailPage({
           )}
         </section>
       </div>
+      <Suspense
+        fallback={
+          <p className="section-note" role="status">
+            관련 영상을 찾고 있어요…
+          </p>
+        }
+      >
+        <PatternVideos pattern={p} />
+      </Suspense>
       <Suspense fallback={null}>
         <RelatedPatterns
           category={p.pattern_categories?.[0]?.permalink || ""}
