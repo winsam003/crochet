@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import PatternCard from "@/components/PatternCard";
 import { getPatterns } from "@/lib/ravelry";
-import { interpretSearch } from "@/lib/patterns";
+import { CATEGORIES, interpretSearch } from "@/lib/patterns";
 import { pageMetadata } from "@/lib/seo";
 
 const collections = [
@@ -16,38 +16,53 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 function selection(raw: Awaited<Props["searchParams"]>) {
   const collection = collections.find((item) => item.key === raw.collection) || collections[0];
   const craft = raw.craft === "knitting" ? "knitting" : "crochet";
-  const page = interpretSearch({ page: typeof raw.page === "string" ? raw.page : undefined }).page;
-  return { collection, craft, page };
+  const { page, category } = interpretSearch({
+    page: typeof raw.page === "string" ? raw.page : undefined,
+    category: typeof raw.category === "string" ? raw.category : undefined,
+  });
+  return { collection, craft, page, category };
 }
 
-function collectionUrl(craft: string, collection: string, page = 1) {
+function collectionUrl(craft: string, collection: string, category: string, page = 1) {
   const params = new URLSearchParams();
   if (craft !== "crochet") params.set("craft", craft);
   if (collection !== "all") params.set("collection", collection);
+  if (category) params.set("category", category);
   if (page > 1) params.set("page", String(page));
   return `/free-patterns${params.size ? `?${params}` : ""}`;
 }
 
 export async function generateMetadata({ searchParams }: Props) {
-  const { collection, craft, page } = selection(await searchParams);
-  const suffix = `${craft === "knitting" ? " · 대바늘" : ""}${collection.key !== "all" ? ` · ${collection.label}` : ""}${page > 1 ? ` · ${page}페이지` : ""}`;
+  const { collection, craft, page, category } = selection(await searchParams);
+  const suffix = `${craft === "knitting" ? " · 대바늘" : ""}${collection.key !== "all" ? ` · ${collection.label}` : ""}${category ? ` · ${CATEGORIES.find(([id]) => id === category)?.[1]}` : ""}${page > 1 ? ` · ${page}페이지` : ""}`;
   return pageMetadata(
     `레이블리(Ravelry) 무료 도안 보기${suffix}`,
     "레이블리 무료 코바늘·대바늘 도안을 찾아보세요. 한국어, 기호 도안, 쉬운 도안을 골라 무료 웹 도안과 다운로드 제공처를 확인할 수 있어요.",
-    collectionUrl(craft, collection.key, page),
+    collectionUrl(craft, collection.key, category, page),
   );
 }
 
 export default async function FreePatternsPage({ searchParams }: Props) {
-  const { collection, craft, page } = selection(await searchParams);
-  const returnTo = collectionUrl(craft, collection.key, page);
+  const { collection, craft, page, category } = selection(await searchParams);
+  const returnTo = collectionUrl(craft, collection.key, category, page);
   let data;
   try {
-    data = await getPatterns({ ...collection.params, craft, free: "free", page: String(page) });
+    data = await getPatterns({
+      ...collection.params,
+      craft,
+      category,
+      free: "free",
+      page: String(page),
+    });
   } catch {
     // Keep the guide and selected filters available during an API outage.
   }
   const totalPages = Math.min(1000, data?.paginator.page_count || 1);
+  const firstPage = Math.max(1, Math.min(page - 2, totalPages - 4));
+  const visiblePages = Array.from(
+    { length: Math.min(5, totalPages) },
+    (_, index) => firstPage + index,
+  );
   return (
     <div className="page-shell free-patterns-page">
       <header className="page-title">
@@ -70,18 +85,32 @@ export default async function FreePatternsPage({ searchParams }: Props) {
           ].map(([value, label]) => (
             <Link
               key={value}
-              href={`${collectionUrl(value, collection.key)}#results`}
+              href={`${collectionUrl(value, collection.key, category)}#results`}
               aria-current={craft === value ? "page" : undefined}
             >
               {label}
             </Link>
           ))}
         </nav>
+        <div className="free-category-group">
+          <p className="free-filter-label">어떤 작품을 만들어 볼까요?</p>
+          <nav className="free-filters free-category-filters" aria-label="도안 종류">
+            {CATEGORIES.map(([value, label]) => (
+              <Link
+                key={value}
+                href={`${collectionUrl(craft, collection.key, value)}#results`}
+                aria-current={category === value ? "page" : undefined}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
         <nav className="free-filters" aria-label="무료 도안 조건">
           {collections.map((item) => (
             <Link
               key={item.key}
-              href={`${collectionUrl(craft, item.key)}#results`}
+              href={`${collectionUrl(craft, item.key, category)}#results`}
               aria-current={collection.key === item.key ? "page" : undefined}
             >
               {item.label}
@@ -92,6 +121,7 @@ export default async function FreePatternsPage({ searchParams }: Props) {
           <div>
             <h2 id="free-results-title">
               {craft === "crochet" ? "코바늘" : "대바늘"} 무료 도안 · {collection.label}
+              {category && ` · ${CATEGORIES.find(([id]) => id === category)?.[1]}`}
             </h2>
             <p className="section-note">
               완성작이 많은 순서로 모았어요.
@@ -126,26 +156,60 @@ export default async function FreePatternsPage({ searchParams }: Props) {
                 <PatternCard key={pattern.id} pattern={pattern} returnTo={returnTo} index={index} />
               ))}
             </div>
-            <nav className="pagination" aria-label="무료 도안 페이지">
-              {page > 1 && (
+            <nav className="free-pagination" aria-label="무료 도안 페이지">
+              {page > 1 ? (
                 <Link
-                  href={`${collectionUrl(craft, collection.key, page - 1)}#results`}
+                  className="free-pagination-direction"
+                  href={`${collectionUrl(craft, collection.key, category, page - 1)}#results`}
                   aria-label="이전 페이지"
+                  rel="prev"
                 >
-                  <ChevronLeft size={18} />
+                  <ChevronLeft size={16} aria-hidden="true" /> 이전
                 </Link>
+              ) : (
+                <span className="free-pagination-direction" aria-disabled="true">
+                  <ChevronLeft size={16} aria-hidden="true" /> 이전
+                </span>
               )}
-              <span aria-current="page">
-                {page} / {totalPages}
-              </span>
-              {page < totalPages && (
+              <div className="free-pagination-numbers">
+                {visiblePages.map((number) =>
+                  number === page ? (
+                    <span
+                      key={number}
+                      aria-current="page"
+                      aria-label={`${number}페이지, 현재 페이지`}
+                    >
+                      {number}
+                    </span>
+                  ) : (
+                    <Link
+                      key={number}
+                      href={`${collectionUrl(craft, collection.key, category, number)}#results`}
+                      aria-label={`${number}페이지`}
+                    >
+                      {number}
+                    </Link>
+                  ),
+                )}
+              </div>
+              {page < totalPages ? (
                 <Link
-                  href={`${collectionUrl(craft, collection.key, page + 1)}#results`}
+                  className="free-pagination-direction"
+                  href={`${collectionUrl(craft, collection.key, category, page + 1)}#results`}
                   aria-label="다음 페이지"
+                  rel="next"
                 >
-                  <ChevronRight size={18} />
+                  다음 <ChevronRight size={16} aria-hidden="true" />
                 </Link>
+              ) : (
+                <span className="free-pagination-direction" aria-disabled="true">
+                  다음 <ChevronRight size={16} aria-hidden="true" />
+                </span>
               )}
+              <p className="free-pagination-summary">
+                전체 {totalPages.toLocaleString("ko-KR")}페이지 중{" "}
+                <strong>{page.toLocaleString("ko-KR")}</strong>페이지
+              </p>
             </nav>
           </>
         )}
