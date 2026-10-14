@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import PatternCard from "@/components/PatternCard";
 import { getPatterns } from "@/lib/ravelry";
-import { CATEGORIES, interpretSearch } from "@/lib/patterns";
+import { CATEGORIES, SORTS, interpretSearch } from "@/lib/patterns";
 import { pageMetadata } from "@/lib/seo";
 
 const collections = [
@@ -11,6 +11,8 @@ const collections = [
   { key: "chart", label: "기호 도안", params: { format: "chart" } },
   { key: "easy", label: "쉬운 도안", params: { difficulty: "easy" } },
 ] as const;
+const freeSorts = SORTS.filter(([key]) => key !== "best");
+
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 function selection(raw: Awaited<Props["searchParams"]>) {
@@ -20,37 +22,46 @@ function selection(raw: Awaited<Props["searchParams"]>) {
     page: typeof raw.page === "string" ? raw.page : undefined,
     category: typeof raw.category === "string" ? raw.category : undefined,
   });
-  return { collection, craft, page, category };
+  const sort = freeSorts.find(([key]) => key === raw.sort)?.[0] || "projects";
+  return { collection, craft, page, category, sort };
 }
 
-function collectionUrl(craft: string, collection: string, category: string, page = 1) {
+function collectionUrl(
+  craft: string,
+  collection: string,
+  category: string,
+  sort: string,
+  page = 1,
+) {
   const params = new URLSearchParams();
   if (craft !== "crochet") params.set("craft", craft);
   if (collection !== "all") params.set("collection", collection);
   if (category) params.set("category", category);
+  if (sort !== "projects") params.set("sort", sort);
   if (page > 1) params.set("page", String(page));
   return `/free-patterns${params.size ? `?${params}` : ""}`;
 }
 
 export async function generateMetadata({ searchParams }: Props) {
-  const { collection, craft, page, category } = selection(await searchParams);
+  const { collection, craft, page, category, sort } = selection(await searchParams);
   const suffix = `${craft === "knitting" ? " · 대바늘" : ""}${collection.key !== "all" ? ` · ${collection.label}` : ""}${category ? ` · ${CATEGORIES.find(([id]) => id === category)?.[1]}` : ""}${page > 1 ? ` · ${page}페이지` : ""}`;
   return pageMetadata(
     `레이블리(Ravelry) 무료 도안 보기${suffix}`,
     "레이블리 무료 코바늘·대바늘 도안을 찾아보세요. 한국어, 기호 도안, 쉬운 도안을 골라 무료 웹 도안과 다운로드 제공처를 확인할 수 있어요.",
-    collectionUrl(craft, collection.key, category, page),
+    collectionUrl(craft, collection.key, category, sort, page),
   );
 }
 
 export default async function FreePatternsPage({ searchParams }: Props) {
-  const { collection, craft, page, category } = selection(await searchParams);
-  const returnTo = collectionUrl(craft, collection.key, category, page);
+  const { collection, craft, page, category, sort } = selection(await searchParams);
+  const returnTo = collectionUrl(craft, collection.key, category, sort, page);
   let data;
   try {
     data = await getPatterns({
       ...collection.params,
       craft,
       category,
+      sort,
       free: "free",
       page: String(page),
     });
@@ -85,7 +96,7 @@ export default async function FreePatternsPage({ searchParams }: Props) {
           ].map(([value, label]) => (
             <Link
               key={value}
-              href={`${collectionUrl(value, collection.key, category)}#results`}
+              href={`${collectionUrl(value, collection.key, category, sort)}#results`}
               aria-current={craft === value ? "page" : undefined}
             >
               {label}
@@ -98,7 +109,7 @@ export default async function FreePatternsPage({ searchParams }: Props) {
             {CATEGORIES.map(([value, label]) => (
               <Link
                 key={value}
-                href={`${collectionUrl(craft, collection.key, value)}#results`}
+                href={`${collectionUrl(craft, collection.key, value, sort)}#results`}
                 aria-current={category === value ? "page" : undefined}
               >
                 {label}
@@ -110,13 +121,27 @@ export default async function FreePatternsPage({ searchParams }: Props) {
           {collections.map((item) => (
             <Link
               key={item.key}
-              href={`${collectionUrl(craft, item.key, category)}#results`}
+              href={`${collectionUrl(craft, item.key, category, sort)}#results`}
               aria-current={collection.key === item.key ? "page" : undefined}
             >
               {item.label}
             </Link>
           ))}
         </nav>
+        <div className="free-category-group">
+          <p className="free-filter-label">정렬 기준</p>
+          <nav className="free-filters free-category-filters" aria-label="무료 도안 정렬">
+            {freeSorts.map(([value, label]) => (
+              <Link
+                key={value}
+                href={`${collectionUrl(craft, collection.key, category, value)}#results`}
+                aria-current={sort === value ? "page" : undefined}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
         <div className="section-heading">
           <div>
             <h2 id="free-results-title">
@@ -124,7 +149,7 @@ export default async function FreePatternsPage({ searchParams }: Props) {
               {category && ` · ${CATEGORIES.find(([id]) => id === category)?.[1]}`}
             </h2>
             <p className="section-note">
-              완성작이 많은 순서로 모았어요.
+              {freeSorts.find(([key]) => key === sort)?.[1]}으로 모았어요.
               {collection.key === "easy" && " 쉬운 도안은 이용자 난이도 평가 1–2를 기준으로 해요."}
             </p>
           </div>
@@ -160,7 +185,7 @@ export default async function FreePatternsPage({ searchParams }: Props) {
               {page > 1 ? (
                 <Link
                   className="free-pagination-direction"
-                  href={`${collectionUrl(craft, collection.key, category, page - 1)}#results`}
+                  href={`${collectionUrl(craft, collection.key, category, sort, page - 1)}#results`}
                   aria-label="이전 페이지"
                   rel="prev"
                 >
@@ -184,7 +209,7 @@ export default async function FreePatternsPage({ searchParams }: Props) {
                   ) : (
                     <Link
                       key={number}
-                      href={`${collectionUrl(craft, collection.key, category, number)}#results`}
+                      href={`${collectionUrl(craft, collection.key, category, sort, number)}#results`}
                       aria-label={`${number}페이지`}
                     >
                       {number}
@@ -195,7 +220,7 @@ export default async function FreePatternsPage({ searchParams }: Props) {
               {page < totalPages ? (
                 <Link
                   className="free-pagination-direction"
-                  href={`${collectionUrl(craft, collection.key, category, page + 1)}#results`}
+                  href={`${collectionUrl(craft, collection.key, category, sort, page + 1)}#results`}
                   aria-label="다음 페이지"
                   rel="next"
                 >
