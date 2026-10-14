@@ -1,7 +1,12 @@
 import Link from "next/link";
 import AdSlot from "@/components/AdSlot";
 import { ArrowUpRight } from "lucide-react";
-export const metadata = { title: "뜨개 길잡이" };
+import { pageMetadata } from "@/lib/seo";
+export const metadata = pageMetadata(
+  "뜨개 길잡이 · 영문 도안 읽는 법",
+  "레이블리 도안 받는 방법부터 실과 바늘, 게이지, 미국식·영국식 코바늘 약어까지 알아보세요.",
+  "/guide",
+);
 export default function GuidePage() {
   return (
     <div className="page-shell guide-page">
@@ -29,6 +34,9 @@ export default function GuidePage() {
               상세 페이지의 제공 방법을 먼저 확인하고, 이동한 사이트에서 언어와 가격을 한 번 더
               살펴보세요. 책이나 잡지에 실린 도안은 해당 출처를 찾아야 합니다.
             </p>
+            <Link href="/free-patterns" className="text-link">
+              레이블리 무료 도안 보기 <ArrowUpRight size={14} />
+            </Link>
           </section>
           <section id="yarn">
             <span className="guide-number">02</span>

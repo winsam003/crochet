@@ -273,7 +273,11 @@ export function detailHref(id: number, returnTo = "/") {
 }
 export function safeReturn(value?: string) {
   return typeof value === "string" &&
-    (value === "/" || value.startsWith("/?") || value === "/saved")
+    (value === "/" ||
+      value.startsWith("/?") ||
+      value === "/saved" ||
+      value === "/free-patterns" ||
+      value.startsWith("/free-patterns?"))
     ? value
     : "/";
 }

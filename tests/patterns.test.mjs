@@ -36,6 +36,13 @@ test("unsafe external URLs and return URLs are rejected", () => {
   assert.equal(safeUrl("javascript:alert(1)"), undefined);
   assert.equal(safeReturn("//evil.com"), "/");
   assert.equal(safeReturn("/?category=bag&page=3"), "/?category=bag&page=3");
+  assert.equal(
+    safeReturn("/free-patterns?craft=knitting&collection=chart&page=2"),
+    "/free-patterns?craft=knitting&collection=chart&page=2",
+  );
+  assert.equal(safeReturn("/free-patterns"), "/free-patterns");
+  assert.equal(safeReturn("/free-patterns/../../evil"), "/");
+  assert.equal(safeReturn("/free-patterns.evil.com"), "/");
 });
 test("Korean intent becomes structured search filters", () => {
   const s = interpretSearch({ query: "초보 코바늘 가방", page: "-3" });

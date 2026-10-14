@@ -4,7 +4,9 @@ import type { Metadata } from "next";
 import { Bookmark, MoveUpRight } from "lucide-react";
 import { Analytics } from "@vercel/analytics/next";
 import AdSlot from "@/components/AdSlot";
+import { SITE_URL } from "@/lib/seo";
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: "WinSam Crochet — 다음에 뜰 것을 찾아요", template: "%s · WinSam Crochet" },
   description:
     "해외 뜨개 도안을 한국어로 찾아보세요. 도안 언어와 형식, 실과 바늘, 무료 제공·구매 경로까지 한눈에.",
@@ -35,7 +37,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <nav aria-label="주 메뉴">
               <Link href="/">도안 찾기</Link>
-              <Link href="/guide">뜨개 길잡이</Link>
+              <Link href="/guide" className="guide-nav">
+                뜨개 길잡이
+              </Link>
+              <Link href="/free-patterns">무료 도안</Link>
               <Link href="/saved" className="saved-nav">
                 <Bookmark size={16} />내 도안함
               </Link>

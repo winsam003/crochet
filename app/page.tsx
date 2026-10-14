@@ -14,6 +14,55 @@ import { CATEGORIES, SORTS, interpretSearch, type SearchParams } from "@/lib/pat
 import PatternCard from "@/components/PatternCard";
 import HotPatterns from "@/components/HotPatterns";
 import DiscoverPatterns from "@/components/DiscoverPatterns";
+import { pageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const raw = await searchParams;
+  const params = new URLSearchParams();
+  for (const key of [
+    "query",
+    "designer",
+    "craft",
+    "category",
+    "free",
+    "language",
+    "format",
+    "difficulty",
+    "sort",
+    "page",
+  ]) {
+    const value = Array.isArray(raw[key]) ? raw[key][0] : raw[key];
+    if (value?.trim()) params.set(key, value);
+  }
+  const s = interpretSearch(Object.fromEntries(params));
+  const title = params.size
+    ? [
+        s.designer,
+        s.query,
+        s.craft === "knitting" ? "대바늘" : s.craft === "crochet" ? "코바늘" : "뜨개",
+        CATEGORIES.find(([id]) => id === s.category && id)?.[1],
+        s.availability === "free" ? "무료 도안" : "도안 찾기",
+        s.language === "kr" ? "한국어" : s.language,
+        s.format === "chart" ? "기호 도안" : s.format,
+        s.difficulty ? "쉬운 도안" : "",
+        SORTS.find(([id]) => id === s.sort)?.[1],
+        s.page > 1 ? `${s.page}페이지` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "레이블리 도안 찾기 · 코바늘과 대바늘";
+  return pageMetadata(
+    title,
+    params.size
+      ? `${title}. 도안 언어와 형식, 실과 바늘, 무료 제공·구매 경로를 확인하세요.`
+      : "Ravelry(레이블리)의 코바늘·대바늘 도안을 한국어로 찾아보세요. 무료 도안, 기호 도안, 실과 바늘, 원문 제공처까지 한눈에.",
+    params.size ? `/?${params}` : "/",
+  );
+}
 export default async function HomePage({
   searchParams,
 }: {
@@ -68,6 +117,9 @@ export default async function HomePage({
             마음에 드는 도안부터 준비할 실과 바늘까지.
             <br />한 코씩 시작할 수 있도록, 함께 살펴보세요.
           </p>
+          <Link href="/free-patterns" className="primary-button home-free-link">
+            레이블리 무료 도안 보기 <ArrowUpRight size={17} />
+          </Link>
         </div>
         <div className="intro-note">
           <span className="note-number">01 —</span>

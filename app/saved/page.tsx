@@ -1,5 +1,5 @@
 import { LibraryView } from "@/components/Library";
-export const metadata = { title: "내 도안함" };
+export const metadata = { title: "내 도안함", robots: { index: false, follow: true } };
 export default function SavedPage() {
   return (
     <div className="page-shell library-page">

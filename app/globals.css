@@ -109,6 +109,52 @@ button {
 .skip-link:focus {
   top: 10px;
 }
+.home-free-link {
+  margin-top: 20px;
+}
+.free-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.free-filters a {
+  padding: 10px 16px;
+  border: 1px solid var(--ink, #25251f);
+  border-radius: 24px;
+  font-size: 14px;
+}
+.free-filters a[aria-current="page"] {
+  background: #292c25;
+  color: #fff;
+}
+.free-guide {
+  max-width: 760px;
+  margin: 48px auto 64px;
+  scroll-margin-top: 100px;
+}
+.free-guide h2 {
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+.free-guide ol {
+  padding-left: 24px;
+  list-style: decimal;
+}
+.free-guide li {
+  margin-bottom: 22px;
+  padding-left: 6px;
+}
+.free-guide p {
+  line-height: 1.9;
+  margin: 10px 0 20px;
+}
+.free-patterns-page .page-title h1 {
+  font-size: clamp(28px, 6vw, 52px);
+}
+.free-patterns-page #results {
+  scroll-margin-top: 100px;
+}
 .site-header {
   border-bottom: 1px solid var(--line);
   background: var(--paper);
@@ -1182,6 +1228,8 @@ th {
 @media (max-width: 700px) {
   .header-inner {
     padding: 19px 20px;
+    flex-wrap: wrap;
+    gap: 16px;
   }
   .wordmark {
     font-size: 25px;
@@ -1193,10 +1241,11 @@ th {
     font-size: 24px;
   }
   .site-header nav {
-    gap: 18px;
+    gap: 12px;
     font-size: 11px;
+    white-space: nowrap;
   }
-  .site-header nav > a:nth-child(2) {
+  .site-header nav > a.guide-nav {
     display: none;
   }
   .saved-nav {

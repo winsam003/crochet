@@ -23,6 +23,22 @@ import PatternImage from "@/components/PatternImage";
 import CrochetTerms from "@/components/CrochetTerms";
 import RelatedPatterns from "@/components/RelatedPatterns";
 import PatternVideos from "@/components/PatternVideos";
+import { pageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const p = await getPatternDetail(id);
+  if (!p) notFound();
+  const craft =
+    p.craft?.permalink === "crochet"
+      ? "코바늘"
+      : p.craft?.permalink === "knitting"
+        ? "대바늘"
+        : "뜨개";
+  const title = `${p.name} · ${craft} ${p.free === true ? "무료 " : ""}도안`;
+  const description = `${p.name}의 ${languageLabel(p)} 도안 정보. ${acquisition(p).label}. 실과 바늘, 도안 형식과 원문 제공처를 확인하세요.`;
+  return pageMetadata(title, description, `/pattern/${p.id}`);
+}
 export default async function PatternDetailPage({
   params,
   searchParams,
@@ -58,7 +74,11 @@ export default async function PatternDetailPage({
       <RecentTracker pattern={saved} />
       <Link className="back-link" href={back}>
         <ArrowLeft size={16} />
-        {back === "/saved" ? "내 도안함" : "검색 결과로 돌아가기"}
+        {back === "/saved"
+          ? "내 도안함"
+          : back.startsWith("/free-patterns")
+            ? "무료 도안으로 돌아가기"
+            : "검색 결과로 돌아가기"}
       </Link>
       <div className="detail-grid">
         <section className="detail-gallery" aria-label="도안 사진">
@@ -282,9 +302,13 @@ export default async function PatternDetailPage({
                   비교하세요.
                 </p>
               </aside>
-              <aside className={styles["coupang-partners-card"]} aria-labelledby="coupang-partners-title">
+              <aside
+                className={styles["coupang-partners-card"]}
+                aria-labelledby="coupang-partners-title"
+              >
                 <p className={styles["affiliate-disclosure"]}>
-                  이 페이지는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+                  이 페이지는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를
+                  제공받습니다.
                 </p>
                 <p className="eyebrow">쿠팡 파트너스 · 상품 예시</p>
                 <h3 id="coupang-partners-title">뜨개실 상품 살펴보기</h3>
