@@ -1,0 +1,59 @@
+.yarn-choice-card,
+.coupang-partners-card {
+  margin: 0 0 22px;
+  padding: 20px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.yarn-choice-card :global(.eyebrow),
+.coupang-partners-card :global(.eyebrow) {
+  margin-top: 0;
+}
+.yarn-choice-card h3,
+.coupang-partners-card h3 {
+  margin: 8px 0 16px;
+  font-size: 17px;
+  font-weight: 500;
+}
+.yarn-choice-card dl {
+  margin: 0;
+}
+.yarn-choice-card dl > div {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.yarn-choice-card dt {
+  color: var(--muted);
+}
+.yarn-choice-card dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.yarn-choice-card .yarn-choice-note,
+.coupang-partners-card .coupang-partners-note {
+  margin: 14px 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.coupang-partners-product {
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+}
+.coupang-partners-product iframe {
+  display: block;
+  border: 0;
+}
+.coupang-partners-card .affiliate-disclosure {
+  margin: 0 0 16px;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.6;
+}

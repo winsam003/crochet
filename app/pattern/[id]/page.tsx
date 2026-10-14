@@ -1,3 +1,4 @@
+import styles from "./materials.module.css";
 import Link from "next/link";
 import AdSlot from "@/components/AdSlot";
 import DesignerLink from "@/components/DesignerLink";
@@ -257,6 +258,55 @@ export default async function PatternDetailPage({
               </dd>
             </div>
           </dl>
+          {(craft === "crochet" || craft === "knitting") && (
+            <>
+              <aside className={styles["yarn-choice-card"]} aria-labelledby="yarn-choice-title">
+                <p className="eyebrow">실 고르기</p>
+                <h3 id="yarn-choice-title">실을 찾기 전에 확인하세요</h3>
+                <dl>
+                  <div>
+                    <dt>권장 실</dt>
+                    <dd>{yarns.length ? yarns.join(" / ") : "원문 도안에서 확인"}</dd>
+                  </div>
+                  <div>
+                    <dt>실 굵기</dt>
+                    <dd>{translateYarnWeight(p.yarn_weight?.name || p.yarn_weight_description)}</dd>
+                  </div>
+                  <div>
+                    <dt>필요한 길이</dt>
+                    <dd>{p.yardage ? meterage(p) : "원문 도안에서 확인"}</dd>
+                  </div>
+                </dl>
+                <p className={styles["yarn-choice-note"]}>
+                  같은 굵기라도 소재와 길이가 달라요. 선택할 사이즈의 소요량을 원문에서 확인한 뒤
+                  비교하세요.
+                </p>
+              </aside>
+              <aside className={styles["coupang-partners-card"]} aria-labelledby="coupang-partners-title">
+                <p className={styles["affiliate-disclosure"]}>
+                  이 페이지는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+                </p>
+                <p className="eyebrow">쿠팡 파트너스 · 상품 예시</p>
+                <h3 id="coupang-partners-title">뜨개실 상품 살펴보기</h3>
+                <p className={styles["coupang-partners-note"]}>
+                  이 상품은 예시이며, 이 도안의 권장 실과 일치한다는 뜻은 아니에요. 상품의 굵기와
+                  길이를 확인해 주세요.
+                </p>
+                <div className={styles["coupang-partners-product"]}>
+                  <iframe
+                    title="쿠팡파트너스 예시 뜨개실 상품"
+                    src="https://coupa.ng/cp8HLl"
+                    width="120"
+                    height="240"
+                    frameBorder="0"
+                    scrolling="no"
+                    referrerPolicy="unsafe-url"
+                    loading="lazy"
+                  />
+                </div>
+              </aside>
+            </>
+          )}
           <Link href="/guide" className="text-link">
             <BookOpen size={16} />실 굵기와 게이지가 낯설다면 <ArrowUpRight size={15} />
           </Link>
