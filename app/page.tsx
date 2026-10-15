@@ -13,6 +13,7 @@ import { getPatterns } from "@/lib/ravelry";
 import { CATEGORIES, SORTS, interpretSearch, type SearchParams } from "@/lib/patterns";
 import PatternCard from "@/components/PatternCard";
 import HotPatterns from "@/components/HotPatterns";
+import PopularDesigners from "@/components/PopularDesigners";
 import DiscoverPatterns from "@/components/DiscoverPatterns";
 import { pageMetadata } from "@/lib/seo";
 
@@ -264,15 +265,20 @@ export default async function HomePage({
         )}
       </section>
       {isDiscovery ? (
-        <Suspense
-          fallback={
-            <p className="notice" role="status">
-              둘러볼 도안을 찾고 있어요…
-            </p>
-          }
-        >
-          <DiscoverPatterns />
-        </Suspense>
+        <>
+          <Suspense fallback={null}>
+            <PopularDesigners />
+          </Suspense>
+          <Suspense
+            fallback={
+              <p className="notice" role="status">
+                둘러볼 도안을 찾고 있어요…
+              </p>
+            }
+          >
+            <DiscoverPatterns />
+          </Suspense>
+        </>
       ) : (
         <section id="results" className="results-section">
           <div className="section-heading">

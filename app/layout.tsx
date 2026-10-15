@@ -25,7 +25,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body>
+      {/* ColorZilla injects cz-shortcut-listen before hydration. Limit suppression to body attributes. */}
+      <body suppressHydrationWarning>
         <a href="#main" className="skip-link">
           본문으로 건너뛰기
         </a>

@@ -95,3 +95,49 @@ export async function getHotPatterns(category = "", craft = "crochet"): Promise<
     return [];
   }
 }
+
+export interface PopularDesigner {
+  id: number;
+  name: string;
+  favorites_count: number;
+  pattern: Pattern;
+}
+
+export const getPopularDesigners = cache(
+  async (craft: "crochet" | "knitting" = "crochet"): Promise<PopularDesigner[]> => {
+    try {
+      const params = new URLSearchParams({
+        craft,
+        page_size: "24",
+        sort: "recently-popular",
+        photo: "yes",
+      });
+      const data = await request<SearchResult>(`patterns/search.json?${params}`, 3600);
+      const candidates = new Map<number, Pattern>();
+      for (const pattern of data.patterns) {
+        const author = pattern.pattern_author?.id ? pattern.pattern_author : pattern.designer;
+        if (author?.id && !candidates.has(author.id)) candidates.set(author.id, pattern);
+      }
+      const results = await Promise.allSettled(
+        Array.from(candidates, async ([id, pattern]): Promise<PopularDesigner | null> => {
+          const { pattern_author: author } = await request<{
+            pattern_author: { id: number; name: string; favorites_count?: number };
+          }>(`designers/${id}.json`, 86400);
+          if (!author.name || typeof author.favorites_count !== "number") return null;
+          return {
+            id: author.id,
+            name: author.name,
+            favorites_count: author.favorites_count,
+            pattern,
+          };
+        }),
+      );
+      return results
+        .flatMap((result) => (result.status === "fulfilled" && result.value ? [result.value] : []))
+        .sort((a, b) => b.favorites_count - a.favorites_count || a.name.localeCompare(b.name))
+        .slice(0, 12);
+    } catch {
+      return [];
+    }
+  },
+);

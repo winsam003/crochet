@@ -15,8 +15,8 @@ export interface Pattern {
   name: string;
   permalink?: string;
   free?: boolean;
-  designer?: { name?: string };
-  pattern_author?: { name?: string };
+  designer?: { id?: number; permalink?: string; name?: string };
+  pattern_author?: { id?: number; permalink?: string; name?: string };
   first_photo?: Photo;
   photos?: Photo[];
   pattern_sources?: Source[];
@@ -277,7 +277,10 @@ export function safeReturn(value?: string) {
       value.startsWith("/?") ||
       value === "/saved" ||
       value === "/free-patterns" ||
-      value.startsWith("/free-patterns?"))
+      value.startsWith("/free-patterns?") ||
+      /^\/free-patterns\/(bags|clothing|hats|dolls|scarves-shawls|home|socks|gloves)(?:\?[^#\\]*)?$/.test(
+        value,
+      ))
     ? value
     : "/";
 }
