@@ -333,7 +333,7 @@ export default async function HomePage({
                 {patterns.map((p, i) => (
                   <Fragment key={p.id}>
                     <PatternCard pattern={p} returnTo={returnTo} index={i} />
-                    {(i === 5 || i === 17) && i < patterns.length - 1 && <AdSlot />}
+                    {i === 5 && i < patterns.length - 1 && <AdSlot />}
                   </Fragment>
                 ))}
               </div>

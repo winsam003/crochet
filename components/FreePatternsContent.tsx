@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+import AdSlot from "./AdSlot";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
@@ -216,7 +218,10 @@ export default async function FreePatternsContent({
           <>
             <div className="pattern-grid">
               {data.patterns.map((pattern, index) => (
-                <PatternCard key={pattern.id} pattern={pattern} returnTo={returnTo} index={index} />
+                <Fragment key={pattern.id}>
+                  <PatternCard pattern={pattern} returnTo={returnTo} index={index} />
+                  {index === 5 && index < data.patterns.length - 1 && <AdSlot />}
+                </Fragment>
               ))}
             </div>
             <nav className="free-pagination" aria-label="무료 도안 페이지">

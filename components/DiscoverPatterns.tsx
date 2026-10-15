@@ -68,10 +68,12 @@ export default async function DiscoverPatterns() {
           </p>
         </div>
       </div>
-      {trendingTopics.topics.map((topic) => (
-        <TrendingTopic key={topic.id} topic={topic} />
+      {trendingTopics.topics.map((topic, index) => (
+        <Fragment key={topic.id}>
+          <TrendingTopic topic={topic} />
+          {index === 0 && <AdSlot />}
+        </Fragment>
       ))}
-      <AdSlot />
       {sections.map((section, index) => {
         const result = results[index];
         const data = result.status === "fulfilled" ? result.value : undefined;
@@ -124,7 +126,6 @@ export default async function DiscoverPatterns() {
                 </div>
               )}
             </section>
-            {index === 1 && <AdSlot />}
           </Fragment>
         );
       })}

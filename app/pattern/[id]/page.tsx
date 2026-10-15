@@ -222,7 +222,7 @@ export default async function PatternDetailPage({
           </div>
         </section>
       </div>
-      <AdSlot />
+      <AdSlot placement="content" />
       <div className="detail-content">
         <section className="materials">
           <p className="eyebrow">실과 바늘 준비</p>

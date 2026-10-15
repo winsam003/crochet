@@ -55,7 +55,7 @@ export default function GuidePage() {
               실제 도안에서 확인하세요.
             </div>
           </section>
-          <AdSlot />
+          <AdSlot placement="content" />
           <section id="gauge">
             <span className="guide-number">03</span>
             <h2>게이지는 크기를 맞추는 작은 연습.</h2>
