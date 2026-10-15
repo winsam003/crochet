@@ -2104,3 +2104,27 @@ th {
     gap: 18px;
   }
 }
+
+/* Daily topics: craft toggles and three-pattern slides. */
+.topic-title-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.topic-title-controls .designer-craft-buttons {
+  margin-bottom: 0;
+}
+.topic-pattern-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.designer-carousel-controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+@media (max-width: 640px) {
+  .topic-pattern-grid {
+    grid-template-columns: 1fr;
+  }
+}

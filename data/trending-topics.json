@@ -1,0 +1,50 @@
+{
+  "source": "naver-searchad",
+  "updatedAt": "2026-10-15T04:59:50.069Z",
+  "seeds": ["코바늘", "대바늘", "뜨개질", "코바늘도안", "대바늘도안"],
+  "methodology": "연관 키워드 중 도안 주제로 연결 가능한 검색어를 선별. 주제별 최대 검색량의 대표 검색어 기준, PC·모바일 합계. 10 미만은 0으로 계산. Ravelry 도안 검색 결과가 있는 주제만 선정.",
+  "topics": [
+    {
+      "id": "scarf",
+      "title": "목도리",
+      "keyword": "목도리뜨개질",
+      "monthlySearches": 5030,
+      "pcSearches": 630,
+      "mobileSearches": 4400,
+      "params": {
+        "query": "scarf",
+        "category": "neck-torso",
+        "craft": "all"
+      },
+      "rank": 1
+    },
+    {
+      "id": "bag",
+      "title": "가방",
+      "keyword": "뜨개가방",
+      "monthlySearches": 4190,
+      "pcSearches": 500,
+      "mobileSearches": 3690,
+      "params": {
+        "query": "bag",
+        "category": "bag",
+        "craft": "all"
+      },
+      "rank": 2
+    },
+    {
+      "id": "scrubbie",
+      "title": "수세미",
+      "keyword": "수세미뜨기",
+      "monthlySearches": 3530,
+      "pcSearches": 360,
+      "mobileSearches": 3170,
+      "params": {
+        "query": "scrubbie",
+        "category": "home",
+        "craft": "all"
+      },
+      "rank": 3
+    }
+  ]
+}

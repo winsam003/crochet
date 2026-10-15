@@ -1,30 +1,21 @@
 import { Fragment } from "react";
 import AdSlot from "./AdSlot";
-import { randomInt } from "node:crypto";
+import { getTrendingTopics } from "@/lib/trending-topics-source";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { getPatterns } from "@/lib/ravelry";
 import PatternCard from "./PatternCard";
-
-const interests = [
-  {
-    category: "bag",
-    title: "가방·파우치",
-    description: "매일 들고 싶은 나만의 소품을 찾아보세요.",
-  },
-  { category: "softies", title: "인형", description: "한 코씩 완성하는 작은 친구들을 만나보세요." },
-  { category: "home", title: "생활 소품", description: "일상 곳곳에 손뜨개의 온기를 더해보세요." },
-];
+import TrendingTopic from "./TrendingTopic";
 
 export default async function DiscoverPatterns() {
-  // The home page awaits searchParams, so this choice is made per server render.
-  const interest = interests[randomInt(interests.length)];
-  const sections: { title: string; description: string; params: Record<string, string> }[] = [
-    {
-      title: interest.title,
-      description: interest.description,
-      params: { category: interest.category },
-    },
+  const trendingTopics = await getTrendingTopics();
+  const isRanked = trendingTopics.source === "naver-searchad";
+  const sections: {
+    title: string;
+    description: string;
+    params: Record<string, string>;
+    rank?: number;
+  }[] = [
     {
       title: "한국어로 읽는 도안",
       description: "언어 부담 없이 시작해보세요.",
@@ -53,6 +44,34 @@ export default async function DiscoverPatterns() {
 
   return (
     <div id="results" className="discovery-sections">
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">{isRanked ? "많이 찾는 뜨개 주제" : "도안 둘러보기"}</p>
+          <h2>{isRanked ? "국내 검색 수요 TOP 3" : "오늘의 취향 탐색"}</h2>
+          <p className="section-note">
+            {isRanked && trendingTopics.updatedAt ? (
+              <>
+                네이버 연관 검색어 중 도안으로 만날 수 있는 주제를 골랐어요.
+                <br />
+                주제별 대표 검색어의 월간 검색량 기준 ·{" "}
+                {new Intl.DateTimeFormat("ko-KR", {
+                  timeZone: "Asia/Seoul",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }).format(new Date(trendingTopics.updatedAt))}{" "}
+                갱신
+              </>
+            ) : (
+              "가방부터 인형, 생활 소품까지 취향에 맞는 도안을 만나보세요."
+            )}
+          </p>
+        </div>
+      </div>
+      {trendingTopics.topics.map((topic) => (
+        <TrendingTopic key={topic.id} topic={topic} />
+      ))}
+      <AdSlot />
       {sections.map((section, index) => {
         const result = results[index];
         const data = result.status === "fulfilled" ? result.value : undefined;
@@ -65,7 +84,9 @@ export default async function DiscoverPatterns() {
             <section className="results-section" aria-labelledby={`discover-${index}`}>
               <div className="section-heading">
                 <div>
-                  <p className="eyebrow">{index === 0 ? "오늘의 취향 탐색" : "도안 둘러보기"}</p>
+                  <p className="eyebrow">
+                    {section.rank ? `국내 검색 수요 ${section.rank}위` : "도안 둘러보기"}
+                  </p>
                   <h2 id={`discover-${index}`}>{section.title}</h2>
                   <p className="section-note">{section.description}</p>
                 </div>
@@ -103,7 +124,7 @@ export default async function DiscoverPatterns() {
                 </div>
               )}
             </section>
-            {(index === 0 || index === 2) && <AdSlot />}
+            {index === 1 && <AdSlot />}
           </Fragment>
         );
       })}

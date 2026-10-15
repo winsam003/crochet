@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --test tests/*.test.mjs",
+    "refresh:trends": "node scripts/update-trending-topics.mjs",
     "check:api": "node scripts/check-ravelry.mjs",
     "check:free-pages": "node scripts/check-free-pages.mjs"
   },

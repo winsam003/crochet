@@ -1,0 +1,58 @@
+name: Refresh daily trending topics
+
+on:
+  schedule:
+    # 08:17 Asia/Seoul every day (23:17 UTC). GitHub may delay scheduled runs.
+    - cron: "17 23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-trending-topics
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Collect search volume and verify Ravelry matches
+        env:
+          NAVER_AD_ACCESS_LICENSE: ${{ secrets.NAVER_AD_ACCESS_LICENSE }}
+          NAVER_AD_SECRET_KEY: ${{ secrets.NAVER_AD_SECRET_KEY }}
+          NAVER_AD_CUSTOMER_ID: ${{ secrets.NAVER_AD_CUSTOMER_ID }}
+          RAVELRY_USER_ID: ${{ secrets.RAVELRY_USER_ID }}
+          RAVELRY_API_KEY: ${{ secrets.RAVELRY_API_KEY }}
+        run: node scripts/update-trending-topics.mjs
+      - name: Publish JSON to data branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp data/trending-topics.json "$RUNNER_TEMP/trending-topics.json"
+          git restore data/trending-topics.json
+          if gh api "repos/$GH_REPO/git/ref/heads/trend-data" > /dev/null 2>&1; then
+            git fetch origin trend-data
+            git checkout -B trend-data origin/trend-data
+          else
+            git checkout --orphan trend-data
+            git rm -rf .
+          fi
+          mkdir -p data
+          cp "$RUNNER_TEMP/trending-topics.json" data/trending-topics.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/trending-topics.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Refresh daily trending topics"
+          git push origin HEAD:trend-data
