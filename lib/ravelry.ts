@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { designerFilter } from "./designer-search";
 import { interpretSearch, type Pattern, type SearchParams } from "./patterns";
 export interface SearchResult {
   patterns: Pattern[];
@@ -45,7 +46,20 @@ export async function getPatterns(input: SearchParams = {}): Promise<SearchResul
     photo: "yes",
   });
   if (s.craft) params.set("craft", s.craft);
-  if (s.designer) params.set("designer", s.designer);
+  if (s.designer) {
+    const filter = await designerFilter(s.designer, async (slug) => {
+      try {
+        const data = await request<{ pattern_author: { name: string; permalink: string } }>(
+          `designers/${encodeURIComponent(slug)}.json`,
+        );
+        return data.pattern_author;
+      } catch (error) {
+        if (error instanceof Error && error.message === "Ravelry HTTP 404") return null;
+        throw error;
+      }
+    });
+    params.set(filter.key, filter.value);
+  }
   if (s.availability) params.set("availability", s.availability);
   if (s.category) params.set("pc", s.category);
   if (s.language) params.set("language", s.language);

@@ -1,5 +1,6 @@
 // Optional, read-only live API smoke test. Requires .env.local; never logs credentials.
 import assert from "node:assert/strict";
+import { designerFilter } from "../lib/designer-search.ts";
 process.loadEnvFile(".env.local");
 const headers = {
   Authorization: `Basic ${Buffer.from(`${process.env.RAVELRY_USER_ID}:${process.env.RAVELRY_API_KEY}`).toString("base64")}`,
@@ -30,10 +31,14 @@ for (const [name, filter, check] of [
   console.log(`${name}: ${ids.length} verified patterns (${data.paginator.results} results)`);
 }
 
-for (const designer of ["PetiteKnit", "Sarah Zimmerman"]) {
+for (const designer of ["PetiteKnit", "Sarah Zimmerman", "The Knitting"]) {
+  const filter = await designerFilter(
+    designer,
+    async (slug) => (await get(`designers/${encodeURIComponent(slug)}.json`)).pattern_author,
+  );
   for (const page of [1, 2]) {
     const params = new URLSearchParams({
-      designer,
+      [filter.key]: filter.value,
       page: String(page),
       page_size: "3",
       photo: "yes",
