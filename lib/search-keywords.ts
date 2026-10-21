@@ -257,8 +257,37 @@ reindeer|순록
 halloween|할로윈
 ghost|유령
 easter|부활절
-mini|작은,미니
+mini|미니
 `);
+add(
+  `
+cute|귀여운,깜찍한,앙증맞은
+pretty|예쁜,이쁜
+lovely|사랑스러운
+cool|멋진
+elegant|우아한
+simple|심플한,단순한
+basic|기본적인,베이직한
+vintage|빈티지한
+classic|클래식한
+mini|작은,조그만,조그마한
+large|큰,커다란
+giant|초대형,아주큰
+long|긴,기다란
+short|짧은
+chunky|두꺼운,두툼한
+thin|얇은
+round|둥근,동그란
+flat|납작한
+fluffy|폭신한,복슬복슬한,보송보송한
+soft|부드러운
+warm|따뜻한,따듯한
+cozy|포근한
+colorful|알록달록한
+fancy|화려한
+`,
+  "adjective",
+);
 // Ambiguous aliases require a franchise or explicit character context.
 const ambiguous: Record<
   string,
@@ -530,8 +559,9 @@ export function expandKeywords(input: string) {
         (other) => other !== p && other.group === p.group && !franchiseValues.has(other.value),
       ),
   );
-  function queryFor(replace?: Piece, value?: string) {
+  function queryFor(replace?: Piece, value?: string, omitAdjectives = false) {
     const words = meaningful
+      .filter((p) => !omitAdjectives || p.group !== "adjective")
       .flatMap((p) => (p === replace ? value! : p.value).split(/\s+/))
       .filter(Boolean);
     return words
@@ -541,8 +571,17 @@ export function expandKeywords(input: string) {
       )
       .join(" ");
   }
+  const broaderQuery = queryFor(undefined, undefined, true);
+  const broaderLabel = meaningful
+    .filter((p) => p.group !== "adjective" && (p.value || p.category))
+    .map((p) => p.source)
+    .join(" ");
   return {
     query: queryFor(),
+    broaderSearch:
+      meaningful.some((p) => p.group === "adjective") && broaderLabel && broaderQuery !== queryFor()
+        ? { query: broaderQuery, label: broaderLabel }
+        : null,
     categories: [...new Set(pieces.map((p) => p.category).filter((v): v is string => !!v))],
     intents: new Set(pieces.map((p) => p.intent)),
     choices: meaningful.flatMap((p) =>

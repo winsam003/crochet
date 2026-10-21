@@ -117,5 +117,38 @@ test("recovery links retain other effective filters, clear page and do not re-in
 test("grammatical suffixes are stripped only from recognized words", () => {
   assert.equal(interpretSearch({ query: "피카츄의 인형 도안 추천" }).query, "pikachu");
   assert.equal(interpretSearch({ query: "처음본이름의 인형" }).query, "처음본이름의");
-  assert.equal(interpretSearch({ query: "귀여운토끼" }).query, "귀여운토끼");
+  assert.equal(interpretSearch({ query: "귀여운토끼" }).query, "cute rabbit");
+});
+
+test("adjectives translate with spaced and compact subjects", () => {
+  for (const query of ["귀여운 피카츄", "귀여운피카츄", "깜찍한 피카추"]) {
+    const s = interpretSearch({ query });
+    assert.equal(s.query, "cute pikachu");
+    assert.equal(s.broaderSearch.query, "pikachu");
+  }
+  assert.equal(interpretSearch({ query: "아주 큰 피카츄" }).query, "giant pikachu");
+  assert.equal(interpretSearch({ query: "작은 폭신한 토끼" }).broaderSearch.query, "rabbit");
+  assert.equal(interpretSearch({ query: "귀여운" }).broaderSearch, null);
+  assert.equal(interpretSearch({ query: "피카츄" }).broaderSearch, null);
+  assert.equal(interpretSearch({ query: "귀여운 피카츄", mode: "raw" }).broaderSearch, null);
+  assert.equal(interpretSearch({ query: "귀여운 새이름" }).broaderSearch.query, "새이름");
+});
+
+test("broader search retains filters and resets pagination, including category-only subjects", () => {
+  for (const subject of ["피카츄 인형", "가방"]) {
+    const input = { query: `무료 쉬운 귀여운 ${subject}`, language: "kr", page: "8" };
+    const s = interpretSearch(input);
+    const url = new URL(
+      searchLink(input, { query: s.broaderSearch.query, mode: "raw" }),
+      "https://example.com",
+    );
+    const next = interpretSearch(Object.fromEntries(url.searchParams));
+    assert.equal(next.query, subject === "가방" ? "" : "pikachu");
+    assert.equal(next.category, s.category);
+    assert.equal(next.availability, "free");
+    assert.equal(next.difficulty, "easy");
+    assert.equal(next.language, "kr");
+    assert.equal(next.page, 1);
+    assert.equal(next.broaderSearch, null);
+  }
 });

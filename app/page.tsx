@@ -366,8 +366,16 @@ export default async function HomePage({
             <div className="empty-state">
               <Search size={28} />
               <h3>이 조건에 맞는 도안이 없어요.</h3>
-              <p>조건을 하나씩 풀어 보세요. 검색어와 나머지 조건은 유지돼요.</p>
+              <p>검색 범위를 넓히거나 조건을 하나씩 풀어 보세요.</p>
               <div className="search-help-links">
+                {data.paginator.results === 0 && s.broaderSearch && (
+                  <Link
+                    className="secondary-button"
+                    href={searchLink(params, { query: s.broaderSearch.query, mode: "raw" })}
+                  >
+                    ‘{s.broaderSearch.label}’로 검색 범위 넓히기
+                  </Link>
+                )}
                 {s.language && (
                   <Link className="secondary-button" href={searchLink(params, { language: "" })}>
                     모든 언어로 찾기

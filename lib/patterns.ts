@@ -115,6 +115,7 @@ export function interpretSearch(input: SearchParams) {
     originalQuery,
     raw,
     choices: expanded.choices,
+    broaderSearch: expanded.broaderSearch,
     changed:
       !raw &&
       (query !== originalQuery ||
