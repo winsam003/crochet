@@ -10,7 +10,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { getPatterns } from "@/lib/ravelry";
-import { CATEGORIES, SORTS, interpretSearch, type SearchParams } from "@/lib/patterns";
+import { CATEGORIES, SORTS, interpretSearch, searchLink, type SearchParams } from "@/lib/patterns";
 import PatternCard from "@/components/PatternCard";
 import HotPatterns from "@/components/HotPatterns";
 import PopularDesigners from "@/components/PopularDesigners";
@@ -35,9 +35,10 @@ export async function generateMetadata({
     "difficulty",
     "sort",
     "page",
+    "mode",
   ]) {
     const value = Array.isArray(raw[key]) ? raw[key][0] : raw[key];
-    if (value?.trim()) params.set(key, value);
+    if (value !== undefined) params.set(key, value);
   }
   const s = interpretSearch(Object.fromEntries(params));
   const title = params.size
@@ -135,7 +136,7 @@ export default async function HomePage({
         </div>
       </section>
       <section className="search-section" aria-label="도안 검색">
-        <form action="/" method="GET">
+        <form key={current.toString()} action="/" method="GET">
           <div className="search-main">
             <Search size={22} />
             <label className="sr-only" htmlFor="query">
@@ -145,13 +146,22 @@ export default async function HomePage({
               id="query"
               name="query"
               defaultValue={params.query || ""}
-              placeholder="무엇을 뜨고 싶으세요? 예: 초보 코바늘 가방"
+              placeholder="예: 피카츄 인형, 무료 대바늘 조끼"
+              aria-describedby="query-hint"
               maxLength={160}
             />
             <button className="primary-button" type="submit">
               도안 찾기 <ArrowRight size={17} />
             </button>
           </div>
+          <p id="query-hint" className="section-note">
+            한글 캐릭터 이름과 뜨개 용어를 영어 검색어로 바꿔 찾아요. 등록되지 않은 이름은 그대로
+            검색해요. 한글 검색이 한국어 도안만 찾는다는 뜻은 아니에요.
+          </p>
+          <label className="search-raw-option">
+            <input type="checkbox" name="mode" value="raw" defaultChecked={s.raw} />
+            검색어를 변환하지 않고 그대로 검색
+          </label>
           <div className="designer-search">
             <label htmlFor="designer">작가명</label>
             <input
@@ -171,7 +181,7 @@ export default async function HomePage({
             <label>
               뜨개 종류
               <select name="craft" defaultValue={params.craft || "auto"}>
-                <option value="auto">자동 선택</option>
+                <option value="auto">자동 선택 · 기본 코바늘</option>
                 <option value="all">전체</option>
                 <option value="crochet">코바늘</option>
                 <option value="knitting">대바늘</option>
@@ -179,7 +189,8 @@ export default async function HomePage({
             </label>
             <label>
               만들고 싶은 것
-              <select name="category" defaultValue={s.category}>
+              <select name="category" defaultValue={params.category ?? "auto"}>
+                <option value="auto">검색어에서 자동 선택</option>
                 {CATEGORIES.map(([id, label]) => (
                   <option value={id} key={id}>
                     {label}
@@ -189,7 +200,8 @@ export default async function HomePage({
             </label>
             <label>
               도안 받는 방법
-              <select name="free" defaultValue={s.availability}>
+              <select name="free" defaultValue={params.free ?? "auto"}>
+                <option value="auto">검색어에서 자동 선택</option>
                 <option value="">전체</option>
                 <option value="free">무료 제공</option>
                 <option value="online">온라인 구매 가능</option>
@@ -216,7 +228,8 @@ export default async function HomePage({
             </label>
             <label>
               난이도
-              <select name="difficulty" defaultValue={s.difficulty}>
+              <select name="difficulty" defaultValue={params.difficulty ?? "auto"}>
+                <option value="auto">검색어에서 자동 선택</option>
                 <option value="">모든 난이도</option>
                 <option value="easy">쉬운 편 (평가 1–2)</option>
               </select>
@@ -246,22 +259,53 @@ export default async function HomePage({
           </Link>
         </div>
         {(params.query || s.designer) && (
-          <p className="search-interpretation">
-            검색에 반영한 조건:{" "}
-            {s.craft === "crochet"
-              ? "코바늘"
-              : s.craft === "knitting"
-                ? "대바늘"
-                : "모든 뜨개 종류"}
-            {s.designer && ` · 작가 “${s.designer}”`}
-            {s.category && ` · ${CATEGORIES.find(([id]) => id === s.category)?.[1]}`}
-            {s.difficulty && " · 쉬운 편"}
-            {s.availability === "free" && " · 무료"}
-            {s.query && ` · “${s.query}”`}
-            {params.query && (
-              <span>한국어 일부 용어를 검색 조건으로 바꿨어요. 위에서 조정할 수 있어요.</span>
+          <div className="search-interpretation" aria-live="polite">
+            <p>
+              검색에 반영한 조건:{" "}
+              {s.craft === "crochet"
+                ? "코바늘"
+                : s.craft === "knitting"
+                  ? "대바늘"
+                  : "모든 뜨개 종류"}
+              {s.designer && ` · 작가 “${s.designer}”`}
+              {s.category && ` · ${CATEGORIES.find(([id]) => id === s.category)?.[1]}`}
+              {s.difficulty && " · 난이도 평가 1–2 (평가 없는 도안 제외)"}
+              {s.availability &&
+                ` · ${s.availability === "free" ? "무료" : s.availability === "online" ? "온라인 구매 가능" : "Ravelry 다운로드 제공"}`}
+              {s.language &&
+                ` · ${s.language === "kr" ? "한국어" : s.language === "en" ? "영어" : "일본어"} 도안`}
+              {s.format &&
+                ` · ${s.format === "chart" ? "기호 도안" : s.format === "written-pattern" ? "글 도안" : "영상 도안"}`}
+            </p>
+            <p>
+              실제 검색어: <strong>{s.query || "없음 · 선택한 조건으로 검색"}</strong>
+            </p>
+            {s.raw ? (
+              <Link className="text-link" href={searchLink(params, { mode: undefined })}>
+                한글 키워드 변환 사용하기
+              </Link>
+            ) : s.changed && params.query ? (
+              <Link className="text-link" href={searchLink(params, { mode: "raw" })}>
+                입력한 검색어 그대로 재검색
+              </Link>
+            ) : null}
+            {s.choices.length > 0 && (
+              <div className="search-help">
+                <p>여러 뜻이 있는 이름이에요. 찾으려는 대상을 선택해 주세요.</p>
+                <div className="search-help-links">
+                  {s.choices.map((choice) => (
+                    <Link
+                      key={`${choice.label}-${choice.query}`}
+                      className="secondary-button"
+                      href={searchLink(params, { query: choice.query, mode: "raw" })}
+                    >
+                      {choice.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             )}
-          </p>
+          </div>
         )}
       </section>
       {isDiscovery ? (
@@ -322,7 +366,54 @@ export default async function HomePage({
             <div className="empty-state">
               <Search size={28} />
               <h3>이 조건에 맞는 도안이 없어요.</h3>
-              <p>조건을 조금 줄이거나 다른 이름으로 찾아보세요.</p>
+              <p>조건을 하나씩 풀어 보세요. 검색어와 나머지 조건은 유지돼요.</p>
+              <div className="search-help-links">
+                {s.language && (
+                  <Link className="secondary-button" href={searchLink(params, { language: "" })}>
+                    모든 언어로 찾기
+                  </Link>
+                )}
+                {s.difficulty && (
+                  <Link className="secondary-button" href={searchLink(params, { difficulty: "" })}>
+                    난이도 제한 풀기
+                  </Link>
+                )}
+                {s.format && (
+                  <Link className="secondary-button" href={searchLink(params, { format: "" })}>
+                    모든 도안 형식으로 찾기
+                  </Link>
+                )}
+                {s.category && (
+                  <Link className="secondary-button" href={searchLink(params, { category: "" })}>
+                    모든 작품 종류로 찾기
+                  </Link>
+                )}
+                {s.craft && (
+                  <Link className="secondary-button" href={searchLink(params, { craft: "all" })}>
+                    코바늘·대바늘 함께 찾기
+                  </Link>
+                )}
+                {s.availability && (
+                  <Link className="secondary-button" href={searchLink(params, { free: "" })}>
+                    무료·구매 조건 풀기
+                  </Link>
+                )}
+                {s.page > 1 && (
+                  <Link className="secondary-button" href={searchLink(params)}>
+                    첫 페이지로 돌아가기
+                  </Link>
+                )}
+              </div>
+              {/[가-힣]/.test(s.query) && (
+                <p>
+                  등록되지 않았거나 뜻이 모호한 한글이 남아 있어요. 영문 이름을 알고 있다면 검색어를
+                  바꿔 보세요.
+                </p>
+              )}
+              <p>
+                여러 캐릭터를 입력했다면 이름 하나씩 검색해 보세요. 도안이 아직 등록되지 않았을 수도
+                있어요.
+              </p>
               <Link href="/" className="primary-button">
                 전체 도안 보기
               </Link>

@@ -2135,3 +2135,31 @@ th {
   align-items: center;
   max-width: 100%;
 }
+
+/* Search explanations and recovery actions wrap on narrow screens. */
+.search-raw-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 14px;
+}
+.search-raw-option input {
+  accent-color: var(--accent);
+}
+.search-interpretation p {
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.search-help {
+  margin-top: 12px;
+}
+.search-help-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0;
+}
+.empty-state .search-help-links {
+  justify-content: center;
+}

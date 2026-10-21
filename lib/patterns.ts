@@ -1,3 +1,5 @@
+import { expandKeywords } from "./search-keywords.ts";
+
 export interface Photo {
   id?: number;
   medium_url?: string;
@@ -74,57 +76,50 @@ export const SORTS = [
   ["date", "최신 등록순"],
 ] as const;
 export type SearchParams = Record<string, string | undefined>;
-const terms: [RegExp, string, string?][] = [
-  [/버킷\s*햇|벙거지/g, "bucket hat", "hat"],
-  [/비니/g, "beanie", "hat"],
-  [/가디건|카디건/g, "cardigan", "clothing"],
-  [/스웨터|니트/g, "sweater", "clothing"],
-  [/파우치/g, "pouch", "bag"],
-  [/가방/g, "", "bag"],
-  [/모자/g, "", "hat"],
-  [/인형|아미구루미/g, "amigurumi", "softies"],
-  [/목도리/g, "scarf", "neck-torso"],
-  [/숄/g, "shawl", "neck-torso"],
-  [/담요|블랭킷/g, "blanket", "home"],
-  [/수세미/g, "scrubbie", "home"],
-  [/티코스터|코스터/g, "coaster", "home"],
-  [/양말/g, "", "socks"],
-  [/장갑/g, "", "hands"],
-  [/토끼/g, "rabbit"],
-  [/고양이/g, "cat"],
-  [/강아지/g, "dog"],
-  [/곰돌이|곰/g, "bear"],
-  [/꽃/g, "flower"],
-  [/작은|미니/g, "mini"],
-];
 export function interpretSearch(input: SearchParams) {
-  let query = (input.query || "").trim().slice(0, 160);
+  const originalQuery = (input.query || "").trim().slice(0, 160);
+  const raw = input.mode === "raw";
+  const expanded = expandKeywords(raw ? "" : originalQuery);
+  const query = raw ? originalQuery : expanded.query;
   const designer = (input.designer || "").trim().slice(0, 160);
-  let craft =
-    input.craft === "all" || ((!input.craft || input.craft === "auto") && designer)
+  const explicitCraft = ["all", "crochet", "knitting"].includes(input.craft || "");
+  const inferredCraft =
+    expanded.intents.has("crochet") && expanded.intents.has("knitting")
       ? ""
-      : input.craft === "knitting"
+      : expanded.intents.has("knitting")
         ? "knitting"
-        : "crochet";
-  let category = CATEGORIES.some(([id]) => id === input.category) ? input.category || "" : "";
-  let availability = ["free", "online", "ravelry"].includes(input.free || "") ? input.free! : "";
-  let difficulty = input.difficulty === "easy" ? "easy" : "";
-  if (/대바늘/.test(query)) craft = "knitting";
-  if (/코바늘/.test(query)) craft = "crochet";
-  if (/무료/.test(query)) availability = "free";
-  if (/초보(?:자)?(?:용)?|쉬운/.test(query)) difficulty = "easy";
-  query = query.replace(/코바늘|대바늘|무료|초보(?:자)?(?:용)?|쉬운/g, " ");
-  for (const [re, english, cat] of terms) {
-    if (re.test(query)) {
-      re.lastIndex = 0;
-      query = query.replace(re, english);
-      if (!category && cat) category = cat;
-    }
-    re.lastIndex = 0;
-  }
-  query = query.replace(/\s+/g, " ").trim();
+        : expanded.intents.has("crochet")
+          ? "crochet"
+          : designer
+            ? ""
+            : "crochet";
+  const craft = explicitCraft ? (input.craft === "all" ? "" : input.craft!) : inferredCraft;
+  const explicitCategory = CATEGORIES.some(([id]) => id === input.category);
+  const category = explicitCategory
+    ? input.category!
+    : expanded.categories.length === 1
+      ? expanded.categories[0]
+      : "";
+  const availability = ["", "free", "online", "ravelry"].includes(input.free ?? "invalid")
+    ? input.free!
+    : expanded.intents.has("free")
+      ? "free"
+      : "";
+  const difficulty = ["", "easy"].includes(input.difficulty ?? "invalid")
+    ? input.difficulty!
+    : expanded.intents.has("easy")
+      ? "easy"
+      : "";
   return {
     query,
+    originalQuery,
+    raw,
+    choices: expanded.choices,
+    changed:
+      !raw &&
+      (query !== originalQuery ||
+        [...expanded.intents].some((value) => value && value !== "ignore") ||
+        !!category),
     designer,
     craft,
     category,
@@ -137,6 +132,30 @@ export function interpretSearch(input: SearchParams) {
     sort: SORTS.some(([key]) => key === input.sort) ? input.sort! : query ? "best" : "projects",
     page: Math.min(1000, Math.max(1, Math.floor(Number(input.page) || 1))),
   };
+}
+
+// Freeze effective filters before changing a single condition, so inferred intent
+// cannot silently restore a filter that the visitor just removed.
+export function searchLink(input: SearchParams, changes: SearchParams = {}) {
+  const s = interpretSearch(input);
+  const values: SearchParams = {
+    query: input.query || "",
+    designer: s.designer,
+    craft: s.craft || "all",
+    category: s.category,
+    free: s.availability,
+    difficulty: s.difficulty,
+    language: s.language,
+    format: s.format,
+    sort: s.sort,
+    mode: s.raw ? "raw" : undefined,
+    ...changes,
+  };
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== undefined) params.set(key, value);
+  }
+  return `/?${params}#results`;
 }
 export function safeUrl(value?: string | null): string | undefined {
   if (!value) return;
