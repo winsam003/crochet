@@ -463,7 +463,7 @@ export default async function HomePage({
       <aside className="guide-banner">
         <div>
           <p className="eyebrow">BEFORE YOUR FIRST STITCH</p>
-          <h2>영문 도안, 천천히 읽어도 괜찮아요.</h2>
+          <h2>영문 도안, 천천히 읽어도 괜찮아요. 🧶</h2>
           <p>실 굵기부터 게이지, 코바늘 약어까지. 시작에 필요한 말을 풀어두었어요.</p>
         </div>
         <Link href="/guide" className="secondary-button">
