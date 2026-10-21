@@ -1,5 +1,6 @@
 import "./globals.css";
 import Link from "next/link";
+import Script from "next/script";
 import type { Metadata } from "next";
 import { Bookmark, MoveUpRight } from "lucide-react";
 import { Analytics } from "@vercel/analytics/next";
@@ -68,6 +69,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </footer>
         <Analytics />
+        {process.env.NODE_ENV === "production" && (
+          <>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-0YQMFR3MG3"
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-0YQMFR3MG3');
+              `}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );
